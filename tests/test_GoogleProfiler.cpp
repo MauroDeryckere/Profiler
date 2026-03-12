@@ -104,15 +104,13 @@ TEST_F(GoogleProfilerTest, ThreadIdIsCaptured)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	auto tid = std::this_thread::get_id();
-	profiler::ProfileResult result{ "Threaded", 0, 100, tid };
+	profiler::ProfileResult result{ "Threaded", 0, 100, std::this_thread::get_id() };
 	p.WriteProfile(result, true);
 
 	p.EndSession();
 
 	auto content = ReadFileContents(TEST_DIR + "/output.json");
-	auto tidHash = std::to_string(std::hash<std::thread::id>{}(tid));
-	EXPECT_NE(content.find(tidHash), std::string::npos);
+	EXPECT_NE(content.find("\"tid\":1"), std::string::npos);
 }
 
 TEST_F(GoogleProfilerTest, MultiThreadedWritesAreSafe)
@@ -146,33 +144,22 @@ TEST_F(GoogleProfilerTest, DifferentThreadsProduceDifferentTids)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	std::thread::id mainTid = std::this_thread::get_id();
-	std::thread::id workerTid;
-
-	profiler::ProfileResult mainResult{ "MainEntry", 0, 100, mainTid };
+	profiler::ProfileResult mainResult{ "MainEntry", 0, 100, std::this_thread::get_id() };
 	p.WriteProfile(mainResult, true);
 
 	std::thread worker([&]()
 	{
-		workerTid = std::this_thread::get_id();
-		profiler::ProfileResult workerResult{ "WorkerEntry", 0, 100, workerTid };
+		profiler::ProfileResult workerResult{ "WorkerEntry", 0, 100, std::this_thread::get_id() };
 		p.WriteProfile(workerResult, true);
 	});
 	worker.join();
 
 	p.EndSession();
 
-	// Thread IDs should differ
-	ASSERT_NE(mainTid, workerTid);
-
 	auto content = ReadFileContents(TEST_DIR + "/output.json");
-	auto mainHash = std::to_string(std::hash<std::thread::id>{}(mainTid));
-	auto workerHash = std::to_string(std::hash<std::thread::id>{}(workerTid));
-
-	// Both hashes must appear and be different
-	EXPECT_NE(mainHash, workerHash);
-	EXPECT_NE(content.find(mainHash), std::string::npos);
-	EXPECT_NE(content.find(workerHash), std::string::npos);
+	// Main thread gets tid 1, worker gets tid 2
+	EXPECT_NE(content.find("\"tid\":1"), std::string::npos);
+	EXPECT_NE(content.find("\"tid\":2"), std::string::npos);
 }
 
 TEST_F(GoogleProfilerTest, EndSessionWithoutBeginIsSafe)

@@ -6,13 +6,19 @@
 #include <fstream>
 #include <memory>
 #include <mutex>
-#include <unordered_map>
+#include <vector>
 
 namespace profiler
 {
 	struct InstrumentationSession final
 	{
 		std::string name;
+	};
+
+	struct ThreadBuffer
+	{
+		std::string data;
+		std::string tidStr;
 	};
 
 	/// Outputs profiling data in Google Trace Event Format (JSON).
@@ -35,18 +41,12 @@ namespace profiler
 	private:
 		void BeginSessionInternal(std::string const& name, size_t reserveSize = 100'000) override;
 
-		void WriteHeader();
-		void WriteFooter();
-
 		mutable std::mutex m_Mutex;
 		std::unique_ptr<InstrumentationSession> m_CurrentSession{ nullptr };
-		std::string m_Buffer;
-		size_t m_BufferReserveSize{};
-		size_t m_BufferFlushThreshold{};
+		std::vector<std::unique_ptr<ThreadBuffer>> m_ThreadBuffers;
 		std::ofstream m_OutputStream;
-		bool m_FirstEntry{ true };
-		std::unordered_map<size_t, uint32_t> m_ThreadIds;
 		uint32_t m_NextThreadId{ 1 };
+		uint32_t m_SessionId{ 0 };
 	};
 }
 

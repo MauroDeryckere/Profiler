@@ -1,9 +1,27 @@
 #include "GoogleProfiler.h"
 
+#include <atomic>
 #include <cstdio>
 
 namespace profiler
 {
+	namespace
+	{
+		uint32_t nextSessionId()
+		{
+			static std::atomic<uint32_t> counter{ 0 };
+			return ++counter;
+		}
+
+		struct ThreadCache
+		{
+			ThreadBuffer* buffer{ nullptr };
+			uint32_t sessionId{ 0 };
+		};
+
+		thread_local ThreadCache s_Cache;
+	}
+
 	GoogleProfiler::~GoogleProfiler()
 	{
 		EndSession();
@@ -24,14 +42,9 @@ namespace profiler
 			return;
 		}
 
-		m_Buffer.clear();
-		m_Buffer.reserve(reserveSize);
-		m_ThreadIds.clear();
+		m_ThreadBuffers.clear();
 		m_NextThreadId = 1;
-		m_BufferFlushThreshold = static_cast<size_t>(0.9f * static_cast<float>(reserveSize));
-		m_BufferReserveSize = reserveSize;
-
-		WriteHeader();
+		m_SessionId = nextSessionId();
 
 		m_CurrentSession = std::make_unique<InstrumentationSession>(InstrumentationSession{ name });
 	}
@@ -43,65 +56,51 @@ namespace profiler
 			return;
 		}
 
-		auto const cat = std::string(isFunction ? "function" : "scope");
-		auto const tidHash = std::hash<std::thread::id>{}(result.threadID);
-
-		std::string entry;
-
-		std::lock_guard lock(m_Mutex);
-
-		auto const [it, inserted] = m_ThreadIds.emplace(tidHash, m_NextThreadId);
-		if (inserted)
+		if (s_Cache.sessionId != m_SessionId)
 		{
-			auto const tid = std::to_string(m_NextThreadId);
-			++m_NextThreadId;
+			std::lock_guard lock(m_Mutex);
 
-			if (!m_FirstEntry)
-			{
-				m_Buffer += ',';
-			}
-			m_FirstEntry = false;
+			auto tb = std::make_unique<ThreadBuffer>();
+			tb->tidStr = std::to_string(m_NextThreadId++);
 
-			m_Buffer += R"({"name":"thread_name","ph":"M","pid":0,"tid":)" + tid
-				+ R"(,"args":{"name":"Thread )" + tid + R"("}})";
+			tb->data += R"({"name":"thread_name","ph":"M","pid":0,"tid":)";
+			tb->data += tb->tidStr;
+			tb->data += R"(,"args":{"name":"Thread )";
+			tb->data += tb->tidStr;
+			tb->data += R"("}})";
+
+			s_Cache.buffer = tb.get();
+			s_Cache.sessionId = m_SessionId;
+			m_ThreadBuffers.push_back(std::move(tb));
 		}
 
-		auto const tid = std::to_string(it->second);
+		auto& d = s_Cache.buffer->data;
+		auto const* cat = isFunction ? "function" : "scope";
 
 		if (result.start >= 0)
 		{
-			entry += R"({"cat":")" + cat
-				+ R"(","name":")" + result.name
-				+ R"(","ph":"B","pid":0,"tid":)" + tid
-				+ R"(,"ts":)" + std::to_string(result.start)
-				+ "}";
+			d += R"(,{"cat":")";
+			d += cat;
+			d += R"(","name":")";
+			d += result.name;
+			d += R"(","ph":"B","pid":0,"tid":)";
+			d += s_Cache.buffer->tidStr;
+			d += R"(,"ts":)";
+			d += std::to_string(result.start);
+			d += '}';
 		}
 
 		if (result.end >= 0)
 		{
-			if (!entry.empty())
-			{
-				entry += ",";
-			}
-
-			entry += R"({"cat":")" + cat
-				+ R"(","name":")" + result.name
-				+ R"(","ph":"E","pid":0,"tid":)" + tid
-				+ R"(,"ts":)" + std::to_string(result.end)
-				+ "}";
-		}
-
-		if (!m_FirstEntry)
-		{
-			m_Buffer += ',';
-		}
-		m_FirstEntry = false;
-		m_Buffer += entry;
-
-		if (m_Buffer.size() >= m_BufferFlushThreshold)
-		{
-			m_OutputStream << m_Buffer;
-			m_Buffer.clear();
+			d += R"(,{"cat":")";
+			d += cat;
+			d += R"(","name":")";
+			d += result.name;
+			d += R"(","ph":"E","pid":0,"tid":)";
+			d += s_Cache.buffer->tidStr;
+			d += R"(,"ts":)";
+			d += std::to_string(result.end);
+			d += '}';
 		}
 	}
 
@@ -109,24 +108,26 @@ namespace profiler
 	{
 		if (m_CurrentSession)
 		{
-			WriteFooter();
+			m_OutputStream << R"({"otherData":{},"traceEvents":[)";
 
-			m_OutputStream << m_Buffer;
+			bool first = true;
+			for (auto const& tb : m_ThreadBuffers)
+			{
+				if (tb->data.empty()) continue;
+
+				if (!first)
+				{
+					m_OutputStream << ',';
+				}
+				first = false;
+				m_OutputStream << tb->data;
+			}
+
+			m_OutputStream << "]}";
 			m_OutputStream.close();
 
+			m_ThreadBuffers.clear();
 			m_CurrentSession = nullptr;
 		}
-	}
-
-	void GoogleProfiler::WriteHeader()
-	{
-		m_FirstEntry = true;
-		m_OutputStream << R"({"otherData":{},"traceEvents":[)";
-		m_OutputStream.flush();
-	}
-
-	void GoogleProfiler::WriteFooter()
-	{
-		m_Buffer += "]}";
 	}
 }
