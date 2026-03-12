@@ -9,7 +9,7 @@ namespace profiler
 {
 	struct ProfileResult final
 	{
-		std::string name;
+		char const* name;
 		long long start;
 		long long end;
 		std::thread::id threadID;

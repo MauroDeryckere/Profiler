@@ -118,25 +118,25 @@ TEST_F(GoogleProfilerTest, MultiThreadedWritesAreSafe)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	auto writeFromThread = [&p](std::string const& name)
+	auto writeFromThread = [&p](char const* name)
 	{
 		for (int i = 0; i < 100; ++i)
 		{
-			profiler::ProfileResult result{ name + std::to_string(i), 0, 100, std::this_thread::get_id() };
+			profiler::ProfileResult result{ name, 0, 100, std::this_thread::get_id() };
 			p.WriteProfile(result, true);
 		}
 	};
 
-	std::thread t1(writeFromThread, "ThreadA_");
-	std::thread t2(writeFromThread, "ThreadB_");
+	std::thread t1(writeFromThread, "ThreadA");
+	std::thread t2(writeFromThread, "ThreadB");
 	t1.join();
 	t2.join();
 
 	p.EndSession();
 
 	auto content = ReadFileContents(TEST_DIR + "/output.json");
-	EXPECT_NE(content.find("\"ThreadA_0\""), std::string::npos);
-	EXPECT_NE(content.find("\"ThreadB_0\""), std::string::npos);
+	EXPECT_NE(content.find("\"ThreadA\""), std::string::npos);
+	EXPECT_NE(content.find("\"ThreadB\""), std::string::npos);
 }
 
 TEST_F(GoogleProfilerTest, DifferentThreadsProduceDifferentTids)

@@ -60,7 +60,7 @@ namespace profiler
 		{
 			std::lock_guard lock(m_Mutex);
 
-			auto tb = std::make_unique<ThreadBuffer>();
+			auto tb{ std::make_unique<ThreadBuffer>() };
 			tb->tidStr = std::to_string(m_NextThreadId++);
 
 			tb->data += R"({"name":"thread_name","ph":"M","pid":0,"tid":)";
@@ -71,11 +71,11 @@ namespace profiler
 
 			s_Cache.buffer = tb.get();
 			s_Cache.sessionId = m_SessionId;
-			m_ThreadBuffers.push_back(std::move(tb));
+			m_ThreadBuffers.emplace_back(std::move(tb));
 		}
 
-		auto& d = s_Cache.buffer->data;
-		auto const* cat = isFunction ? "function" : "scope";
+		auto& d{ s_Cache.buffer->data };
+		auto const* cat{ isFunction ? "function" : "scope" };
 
 		if (result.start >= 0)
 		{
@@ -110,7 +110,7 @@ namespace profiler
 		{
 			m_OutputStream << R"({"otherData":{},"traceEvents":[)";
 
-			bool first = true;
+			bool first{ true };
 			for (auto const& tb : m_ThreadBuffers)
 			{
 				if (tb->data.empty()) continue;
