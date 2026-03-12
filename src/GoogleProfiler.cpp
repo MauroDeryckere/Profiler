@@ -1,6 +1,7 @@
 #include "GoogleProfiler.h"
 
 #include <atomic>
+#include <cinttypes>
 #include <cstdio>
 
 namespace profiler
@@ -76,9 +77,11 @@ namespace profiler
 
 		auto& d{ s_Cache.buffer->data };
 		auto const* cat{ isFunction ? "function" : "scope" };
+		char tsBuf[24];
 
 		if (result.start >= 0)
 		{
+			snprintf(tsBuf, sizeof(tsBuf), "%" PRId64, static_cast<int64_t>(result.start));
 			d += R"(,{"cat":")";
 			d += cat;
 			d += R"(","name":")";
@@ -86,12 +89,13 @@ namespace profiler
 			d += R"(","ph":"B","pid":0,"tid":)";
 			d += s_Cache.buffer->tidStr;
 			d += R"(,"ts":)";
-			d += std::to_string(result.start);
+			d += tsBuf;
 			d += '}';
 		}
 
 		if (result.end >= 0)
 		{
+			snprintf(tsBuf, sizeof(tsBuf), "%" PRId64, static_cast<int64_t>(result.end));
 			d += R"(,{"cat":")";
 			d += cat;
 			d += R"(","name":")";
@@ -99,7 +103,7 @@ namespace profiler
 			d += R"(","ph":"E","pid":0,"tid":)";
 			d += s_Cache.buffer->tidStr;
 			d += R"(,"ts":)";
-			d += std::to_string(result.end);
+			d += tsBuf;
 			d += '}';
 		}
 	}
