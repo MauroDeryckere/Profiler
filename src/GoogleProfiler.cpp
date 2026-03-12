@@ -62,6 +62,7 @@ namespace profiler
 			std::lock_guard lock(m_Mutex);
 
 			auto tb{ std::make_unique<ThreadBuffer>() };
+			tb->data.reserve(100'000);
 			tb->tidStr = std::to_string(m_NextThreadId++);
 
 			tb->data += R"({"name":"thread_name","ph":"M","pid":0,"tid":)";
