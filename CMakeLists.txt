@@ -15,7 +15,7 @@ set(PROFILER_SOURCES
 	src/Profiler.cpp
 	src/InstrumentorTimer.cpp
 	src/GoogleProfiler.cpp
-	src/ProfilerInstance.cpp
+	src/ServiceLocator.cpp
 )
 
 if(PROFILER_USE_OPTICK)

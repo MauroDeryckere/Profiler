@@ -1,5 +1,4 @@
 #include <Profiler/ProfilerMacros.h>
-#include <Profiler/ProfilerInstance.h>
 
 #include <cmath>
 #include <iostream>
@@ -36,10 +35,9 @@ void ProcessData()
 
 int main()
 {
-	// Initialize the profiler (creates the Google/Chrome tracing backend by default)
-	profiler::ProfilerInstance::Initialize();
+	// Profiler is auto-initialized via ServiceLocator — no setup needed.
+	// To use a custom backend: profiler::ServiceLocator::RegisterProfiler(std::make_unique<MyProfiler>());
 
-	// Begin a profiling session — output goes to "profiling/example.json"
 	PROFILER_BEGIN_SESSION("Example", "profiling/example");
 
 	for (int frame = 0; frame < 3; ++frame)
@@ -52,7 +50,5 @@ int main()
 	PROFILER_END_SESSION();
 
 	std::cout << "Profiling complete! Open 'profiling/example.json' in chrome://tracing\n";
-
-	profiler::ProfilerInstance::Shutdown();
 	return 0;
 }

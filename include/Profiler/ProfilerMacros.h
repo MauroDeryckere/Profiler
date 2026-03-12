@@ -26,6 +26,8 @@
 
 #if defined(PROFILER_ENABLED)
 
+	#include "Profiler/ServiceLocator.h"
+
 	#if defined(PROFILER_USE_OPTICK)
 		#include <Optick.h>
 
@@ -42,11 +44,9 @@
 		#define PROFILER_FRAME(name)
 	#endif
 
-	#include "Profiler/ProfilerInstance.h"
-
-	#define PROFILER_BEGIN_SESSION(name, filepath) ::profiler::ProfilerInstance::Get().BeginSession(name, filepath)
-	#define PROFILER_END_SESSION()                 ::profiler::ProfilerInstance::Get().EndSession()
-	#define PROFILER_UPDATE()                      ::profiler::ProfilerInstance::Get().Update()
+	#define PROFILER_BEGIN_SESSION(name, filepath) PROFILER.BeginSession(name, filepath)
+	#define PROFILER_END_SESSION()                 PROFILER.EndSession()
+	#define PROFILER_UPDATE()                      PROFILER.Update()
 
 #else
 
