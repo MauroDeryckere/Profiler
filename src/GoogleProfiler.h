@@ -23,7 +23,6 @@ namespace profiler
 		~GoogleProfiler() override;
 
 		void WriteProfile(ProfileResult const& result, bool isFunction) override;
-		void WriteProfile(std::string const& name) override;
 
 		void EndSession() override;
 

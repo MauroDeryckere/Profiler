@@ -17,11 +17,6 @@ namespace profiler
 		assert(false && "OptickProfiler uses OPTICK_EVENT macros — do not call WriteProfile directly");
 	}
 
-	void OptickProfiler::WriteProfile(std::string const& name)
-	{
-		assert(false && "OptickProfiler uses OPTICK_EVENT macros — do not call WriteProfile directly");
-	}
-
 	void OptickProfiler::EndSession()
 	{
 		EnsureDirectoryExists(fileName.c_str());

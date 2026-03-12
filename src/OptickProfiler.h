@@ -15,7 +15,6 @@ namespace profiler
 		~OptickProfiler() override = default;
 
 		void WriteProfile(ProfileResult const& result, bool isFunction) override;
-		void WriteProfile(std::string const& name) override;
 
 		void EndSession() override;
 

@@ -1,6 +1,5 @@
 #include "GoogleProfiler.h"
 
-#include <cassert>
 #include <cstdio>
 #include <sstream>
 
@@ -62,11 +61,6 @@ namespace profiler
 			m_OutputStream << m_Buffer;
 			m_Buffer.clear();
 		}
-	}
-
-	void GoogleProfiler::WriteProfile(std::string const& name)
-	{
-		assert(false && "GoogleProfiler::WriteProfile(string) is not supported — use the ProfileResult overload");
 	}
 
 	void GoogleProfiler::EndSession()

@@ -24,7 +24,6 @@ namespace profiler
 		virtual void EndSession() = 0;
 
 		virtual void WriteProfile(ProfileResult const& result, bool isFunction) = 0;
-		virtual void WriteProfile(std::string const& name) = 0;
 
 		/// Start a frame-based profiling session at the given path.
 		/// Call Update() each frame; the session auto-ends after GetMaxFrames() frames.
