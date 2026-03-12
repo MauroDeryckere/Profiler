@@ -15,7 +15,7 @@ namespace profiler
 		EndSession();
 		fileName += ".json";
 
-		EnsureDirectoryExists(fileName.c_str());
+		PrepareOutputPath(fileName.c_str());
 
 		m_OutputStream.open(fileName);
 

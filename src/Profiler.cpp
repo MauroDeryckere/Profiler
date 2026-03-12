@@ -44,7 +44,7 @@ namespace profiler
 		}
 	}
 
-	void Profiler::EnsureDirectoryExists(char const* filepath)
+	void Profiler::PrepareOutputPath(char const* filepath)
 	{
 		std::filesystem::path const dir{ std::filesystem::path(filepath).parent_path() };
 

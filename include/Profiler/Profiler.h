@@ -33,8 +33,8 @@ namespace profiler
 		void SetMaxFrames(uint32_t frames) { maxFrames = frames; }
 		uint32_t GetMaxFrames() const { return maxFrames; }
 
-		/// Ensures the parent directory exists and removes any existing file at filepath.
-		static void EnsureDirectoryExists(char const* filepath);
+		/// Creates parent directories for filepath and removes any existing file at that path.
+		static void PrepareOutputPath(char const* filepath);
 
 		Profiler(Profiler const&) = delete;
 		Profiler(Profiler&&) = delete;

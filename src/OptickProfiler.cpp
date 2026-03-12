@@ -19,7 +19,7 @@ namespace profiler
 
 	void OptickProfiler::EndSession()
 	{
-		EnsureDirectoryExists(fileName.c_str());
+		PrepareOutputPath(fileName.c_str());
 
 		OPTICK_STOP_CAPTURE()
 		OPTICK_SAVE_CAPTURE(fileName.c_str())
