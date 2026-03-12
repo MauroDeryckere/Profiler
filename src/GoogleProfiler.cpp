@@ -68,15 +68,28 @@ namespace profiler
 
 		auto const tid = std::to_string(it->second);
 
-		entry += R"({"cat":")" + cat
-			+ R"(","name":")" + result.name
-			+ R"(","ph":"B","pid":0,"tid":)" + tid
-			+ R"(,"ts":)" + std::to_string(result.start)
-			+ R"(},{"cat":")" + cat
-			+ R"(","name":")" + result.name
-			+ R"(","ph":"E","pid":0,"tid":)" + tid
-			+ R"(,"ts":)" + std::to_string(result.end)
-			+ "}";
+		if (result.start >= 0)
+		{
+			entry += R"({"cat":")" + cat
+				+ R"(","name":")" + result.name
+				+ R"(","ph":"B","pid":0,"tid":)" + tid
+				+ R"(,"ts":)" + std::to_string(result.start)
+				+ "}";
+		}
+
+		if (result.end >= 0)
+		{
+			if (!entry.empty())
+			{
+				entry += ",";
+			}
+
+			entry += R"({"cat":")" + cat
+				+ R"(","name":")" + result.name
+				+ R"(","ph":"E","pid":0,"tid":)" + tid
+				+ R"(,"ts":)" + std::to_string(result.end)
+				+ "}";
+		}
 
 		if (!m_FirstEntry)
 		{
