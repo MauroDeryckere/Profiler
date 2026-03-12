@@ -43,6 +43,7 @@ namespace profiler
 		size_t m_BufferReserveSize{};
 		size_t m_BufferFlushThreshold{};
 		std::ofstream m_OutputStream;
+		bool m_FirstEntry{ true };
 	};
 }
 

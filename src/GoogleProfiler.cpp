@@ -42,7 +42,7 @@ namespace profiler
 		}
 
 		std::string entry;
-		entry += R"(,{"cat":")" + std::string(isFunction ? "function" : "scope")
+		entry += (m_FirstEntry ? R"({"cat":")" : R"(,{"cat":")") + std::string(isFunction ? "function" : "scope")
 			+ R"(","dur":)" + std::to_string(result.end - result.start)
 			+ R"(,"name":")" + result.name
 			+ R"(","ph":"X","pid":0,"tid":)" + std::to_string(std::hash<std::thread::id>{}(result.threadID))
@@ -50,6 +50,7 @@ namespace profiler
 			+ "}";
 
 		std::lock_guard lock(m_Mutex);
+		m_FirstEntry = false;
 		m_Buffer += entry;
 
 		if (m_Buffer.size() >= m_BufferFlushThreshold)
@@ -74,7 +75,8 @@ namespace profiler
 
 	void GoogleProfiler::WriteHeader()
 	{
-		m_OutputStream << R"({"otherData": {},"traceEvents":[{})";
+		m_FirstEntry = true;
+		m_OutputStream << R"({"otherData":{},"traceEvents":[)";
 		m_OutputStream.flush();
 	}
 
