@@ -21,14 +21,8 @@
 #define PROFILER_CONCAT_IMPL(a, b) a##b
 #define PROFILER_CONCAT(a, b) PROFILER_CONCAT_IMPL(a, b)
 
-// Portable function signature macro
-#if defined(_MSC_VER)
-	#define PROFILER_FUNC_SIG __FUNCSIG__
-#elif defined(__GNUC__) || defined(__clang__)
-	#define PROFILER_FUNC_SIG __PRETTY_FUNCTION__
-#else
-	#define PROFILER_FUNC_SIG __func__
-#endif
+// Portable function name macro
+#define PROFILER_FUNC_SIG __FUNCTION__
 
 #if defined(PROFILER_ENABLED)
 
