@@ -14,7 +14,7 @@ namespace profiler
 			return ++counter;
 		}
 
-		struct ThreadCache
+		struct ThreadCache final
 		{
 			ThreadBuffer* buffer{ nullptr };
 			uint32_t sessionId{ 0 };

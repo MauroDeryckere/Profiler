@@ -5,17 +5,21 @@
 
 namespace profiler
 {
-	/// Optick profiling backend.
-	/// Requires the Optick library to be available (linked via CMake).
-	/// Uses OPTICK_EVENT / OPTICK_FRAME macros for instrumentation.
+	/**
+	 * Optick profiling backend.
+	 * Requires the Optick library to be available (linked via CMake).
+	 * Uses OPTICK_EVENT / OPTICK_FRAME macros for instrumentation.
+	 */
 	class OptickProfiler final : public Profiler
 	{
 	public:
 		OptickProfiler() = default;
 		~OptickProfiler() override = default;
 
+		/** @see Profiler::WriteProfile */
 		void WriteProfile(ProfileResult const& result, bool isFunction) override;
 
+		/** @see Profiler::EndSession */
 		void EndSession() override;
 
 		OptickProfiler(OptickProfiler const&) = delete;

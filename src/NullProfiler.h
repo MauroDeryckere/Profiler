@@ -5,14 +5,17 @@
 
 namespace profiler
 {
-	/// No-op profiler implementation. Used when profiling is disabled or not yet initialized.
+	/** No-op profiler backend. Used when profiling is disabled or not yet initialized. */
 	class NullProfiler final : public Profiler
 	{
 	public:
 		NullProfiler() = default;
 		~NullProfiler() override = default;
 
+		/** @see Profiler::WriteProfile */
 		void WriteProfile(ProfileResult const& result, bool isFunction) override {}
+
+		/** @see Profiler::EndSession */
 		void EndSession() override {}
 
 		NullProfiler(NullProfiler const&) = delete;

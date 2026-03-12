@@ -9,7 +9,13 @@ namespace profiler
 {
 	namespace ServiceLocator
 	{
+		/** @return Reference to the currently registered profiler backend. */
 		Profiler& GetProfiler();
+
+		/**
+		 * Registers a profiler backend. Replaces any previously registered instance.
+		 * @param profiler	The profiler backend to register. Ownership is transferred.
+		 */
 		void RegisterProfiler(std::unique_ptr<Profiler> profiler);
 	}
 }

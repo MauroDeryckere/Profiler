@@ -5,12 +5,24 @@
 
 namespace profiler
 {
+	/**
+	 * RAII timer that emits B/E profile events on construction and destruction.
+	 * Typically created via PROFILER_FUNCTION() or PROFILER_SCOPE() macros.
+	 */
 	class InstrumentorTimer final
 	{
 	public:
+		/**
+		 * Starts the timer and emits a begin event.
+		 * @param timerName		Name shown in the trace viewer.
+		 * @param isFunction	True if profiling a function, false for a named scope.
+		 */
 		explicit InstrumentorTimer(char const* timerName, bool isFunction);
+
+		/** Stops the timer if not already stopped and emits an end event. */
 		~InstrumentorTimer();
 
+		/** Manually stops the timer early and emits an end event. Safe to call multiple times. */
 		void Stop() noexcept;
 
 		InstrumentorTimer(InstrumentorTimer const&) = delete;
