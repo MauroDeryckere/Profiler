@@ -6,6 +6,7 @@
 #include <fstream>
 #include <memory>
 #include <mutex>
+#include <unordered_map>
 
 namespace profiler
 {
@@ -44,6 +45,8 @@ namespace profiler
 		size_t m_BufferFlushThreshold{};
 		std::ofstream m_OutputStream;
 		bool m_FirstEntry{ true };
+		std::unordered_map<size_t, uint32_t> m_ThreadIds;
+		uint32_t m_NextThreadId{ 1 };
 	};
 }
 

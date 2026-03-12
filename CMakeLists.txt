@@ -9,6 +9,7 @@ project(Profiler
 option(PROFILER_ENABLED      "Enable profiling instrumentation"                ON)
 option(PROFILER_USE_OPTICK   "Use Optick backend (requires Optick library)"    OFF)
 option(PROFILER_BUILD_EXAMPLE "Build the example application"                  OFF)
+option(PROFILER_BUILD_TESTS   "Build the test suite"                           OFF)
 
 # --- Sources ---
 set(PROFILER_SOURCES
@@ -69,6 +70,12 @@ target_link_libraries(Profiler PRIVATE Threads::Threads)
 # --- Example ---
 if(PROFILER_BUILD_EXAMPLE)
 	add_subdirectory(example)
+endif()
+
+# --- Tests ---
+if(PROFILER_BUILD_TESTS)
+	enable_testing()
+	add_subdirectory(tests)
 endif()
 
 # --- Install ---

@@ -40,12 +40,10 @@ target_link_libraries(YourTarget PRIVATE Profiler::Profiler)
 
 ```cpp
 #include <Profiler/ProfilerMacros.h>
-#include <Profiler/ProfilerInstance.h>
 
 int main()
 {
-    profiler::ProfilerInstance::Initialize();
-
+    // Profiler is auto-initialized — no setup needed
     PROFILER_BEGIN_SESSION("MySession", "output/profile");
 
     {
@@ -55,8 +53,6 @@ int main()
 
     // Writes output/profile.json
     PROFILER_END_SESSION();
-
-    profiler::ProfilerInstance::Shutdown();
 }
 
 void MyFunction()
@@ -82,6 +78,7 @@ Open the generated `.json` file in:
 | `PROFILER_ENABLED`      | `ON`    | Enable profiling instrumentation                 |
 | `PROFILER_USE_OPTICK`   | `OFF`   | Use Optick backend (auto-fetched via FetchContent)|
 | `PROFILER_BUILD_EXAMPLE`| `OFF`   | Build the example application                    |
+| `PROFILER_BUILD_TESTS`  | `OFF`   | Build the test suite (Google Test)               |
 
 ### Disabling Profiling
 
@@ -96,9 +93,8 @@ set(PROFILER_ENABLED OFF CACHE BOOL "" FORCE)
 For game engines or frame-based applications, the profiler can auto-end a session after a fixed number of frames:
 
 ```cpp
-auto& prof = profiler::ProfilerInstance::Get();
-prof.SetMaxFrames(10);  // profile 10 frames, then auto-stop
-prof.Start("profiling/gameplay");
+PROFILER.SetMaxFrames(10);  // profile 10 frames, then auto-stop
+PROFILER.Start("profiling/gameplay");
 
 // In your game loop:
 while (running)
@@ -115,7 +111,8 @@ while (running)
 
 | Macro                                  | Description                                            |
 |----------------------------------------|--------------------------------------------------------|
-| `PROFILER_FUNCTION()`                  | Profile the current function (full signature)          |
+| `PROFILER`                             | Access the active profiler instance                    |
+| `PROFILER_FUNCTION()`                  | Profile the current function                           |
 | `PROFILER_SCOPE(name)`                 | Profile a named scope                                  |
 | `PROFILER_BEGIN_SESSION(name, path)`   | Start a profiling session, output to `path.json`       |
 | `PROFILER_END_SESSION()`               | End the current session and flush output               |
@@ -123,16 +120,16 @@ while (running)
 | `PROFILER_THREAD(name)`               | Name a thread (Optick backend only)                    |
 | `PROFILER_FRAME(name)`                | Mark a frame boundary (Optick backend only)            |
 
-### Classes
+### ServiceLocator
 
-**`profiler::ProfilerInstance`** — global profiler management
+**`profiler::ServiceLocator`** — global profiler management (namespace)
 
-| Method                             | Description                                    |
-|------------------------------------|------------------------------------------------|
-| `Initialize()`                     | Create the default backend                     |
-| `Set(std::unique_ptr<Profiler>)`   | Use a custom backend                           |
-| `Get()`                            | Access the active profiler                     |
-| `Shutdown()`                       | Reset to no-op profiler                        |
+| Function                                       | Description                                    |
+|------------------------------------------------|------------------------------------------------|
+| `GetProfiler()`                                | Access the active profiler                     |
+| `RegisterProfiler(std::unique_ptr<Profiler>)`  | Swap in a custom backend                       |
+
+The profiler is auto-initialized at static init time based on compile flags — no manual setup needed.
 
 ## Custom Backend
 
@@ -145,12 +142,27 @@ class MyProfiler : public profiler::Profiler
 {
     void BeginSessionInternal(std::string const& name, size_t reserveSize) override { /* ... */ }
     void WriteProfile(profiler::ProfileResult const& result, bool isFunction) override { /* ... */ }
-    void WriteProfile(std::string const& name) override { /* ... */ }
     void EndSession() override { /* ... */ }
 };
 
 // Register it:
-profiler::ProfilerInstance::Set(std::make_unique<MyProfiler>());
+profiler::ServiceLocator::RegisterProfiler(std::make_unique<MyProfiler>());
+```
+
+## Building & Testing
+
+```bash
+# Configure with tests and example
+cmake -B build -DPROFILER_BUILD_TESTS=ON -DPROFILER_BUILD_EXAMPLE=ON
+
+# Build
+cmake --build build --config Release
+
+# Run tests
+cd build && ctest -C Release --output-on-failure
+
+# Run example
+./example/Release/ProfilerExample
 ```
 
 ## Project Structure
@@ -159,16 +171,17 @@ profiler::ProfilerInstance::Set(std::make_unique<MyProfiler>());
 include/Profiler/          Public API headers
   Profiler.h               Base profiler class & ProfileResult
   InstrumentorTimer.h      RAII scope timer
-  ProfilerInstance.h        Global instance management
+  ServiceLocator.h         Global instance management & PROFILER macro
   ProfilerMacros.h         Instrumentation macros (main include)
 
 src/                       Private implementation
   GoogleProfiler.h/.cpp    Chrome Trace Event Format backend
   OptickProfiler.h/.cpp    Optick backend (optional)
   NullProfiler.h           No-op backend
-  ProfilerInstance.cpp      Singleton management
+  ServiceLocator.cpp       Backend initialization
 
-example/                   Example application
+example/                   Example application (3 demos)
+tests/                     Google Test suite (32 tests)
 cmake/                     CMake package config
 ```
 

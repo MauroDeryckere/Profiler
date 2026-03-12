@@ -1,9 +1,14 @@
 #include <Profiler/ProfilerMacros.h>
+#include <Profiler/ServiceLocator.h>
 
 #include <cmath>
 #include <iostream>
 #include <thread>
 #include <vector>
+
+// ---------------------------------------------------------------------------
+// Basic profiling: functions and scopes
+// ---------------------------------------------------------------------------
 
 void HeavyComputation()
 {
@@ -33,12 +38,78 @@ void ProcessData()
 	}
 }
 
+// ---------------------------------------------------------------------------
+// Multi-threaded profiling
+// ---------------------------------------------------------------------------
+
+void WorkerTask(int id)
+{
+	PROFILER_FUNCTION();
+
+	for (int i = 0; i < 3; ++i)
+	{
+		PROFILER_SCOPE("WorkerIteration");
+		volatile double x = 0.0;
+		for (int j = 0; j < 500'000; ++j)
+			x += std::sin(static_cast<double>(j + id));
+	}
+}
+
+void RunMultiThreadedDemo()
+{
+	PROFILER_SCOPE("MultiThreaded");
+
+	std::vector<std::thread> workers;
+	for (int i = 0; i < 4; ++i)
+		workers.emplace_back(WorkerTask, i);
+
+	for (auto& t : workers)
+		t.join();
+}
+
+// ---------------------------------------------------------------------------
+// Frame-based profiling (auto-stops after N frames)
+// ---------------------------------------------------------------------------
+
+void SimulateFrame(int frame)
+{
+	PROFILER_SCOPE("GameFrame");
+
+	{
+		PROFILER_SCOPE("Update");
+		volatile double x = 0.0;
+		for (int i = 0; i < 100'000; ++i)
+			x += static_cast<double>(i * frame);
+	}
+
+	{
+		PROFILER_SCOPE("Render");
+		std::this_thread::sleep_for(std::chrono::milliseconds(8));
+	}
+}
+
+void RunFrameBasedDemo()
+{
+	PROFILER.SetMaxFrames(5);
+	PROFILER.Start("profiling/frames");
+
+	for (int frame = 0; frame < 10; ++frame)
+	{
+		SimulateFrame(frame);
+		PROFILER_UPDATE(); // auto-ends after 5 frames
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
 int main()
 {
-	// Profiler is auto-initialized via ServiceLocator — no setup needed.
-	// To use a custom backend: profiler::ServiceLocator::RegisterProfiler(std::make_unique<MyProfiler>());
+	// --- Demo 1: Basic session profiling ---
+	std::cout << "=== Demo 1: Basic Session Profiling ===\n";
 
-	PROFILER_BEGIN_SESSION("Example", "profiling/example");
+	PROFILER_BEGIN_SESSION("BasicDemo", "profiling/basic");
 
 	for (int frame = 0; frame < 3; ++frame)
 	{
@@ -48,7 +119,21 @@ int main()
 	}
 
 	PROFILER_END_SESSION();
+	std::cout << "  -> profiling/basic.json\n";
 
-	std::cout << "Profiling complete! Open 'profiling/example.json' in chrome://tracing\n";
+	// --- Demo 2: Multi-threaded profiling ---
+	std::cout << "\n=== Demo 2: Multi-Threaded Profiling ===\n";
+
+	PROFILER_BEGIN_SESSION("ThreadedDemo", "profiling/threaded");
+	RunMultiThreadedDemo();
+	PROFILER_END_SESSION();
+	std::cout << "  -> profiling/threaded.json\n";
+
+	// --- Demo 3: Frame-based auto-stop profiling ---
+	std::cout << "\n=== Demo 3: Frame-Based Profiling (auto-stops after 5 frames) ===\n";
+	RunFrameBasedDemo();
+	std::cout << "  -> profiling/frames0.json\n";
+
+	std::cout << "\nAll done! Open .json files in chrome://tracing or https://ui.perfetto.dev\n";
 	return 0;
 }

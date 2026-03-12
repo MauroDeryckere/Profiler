@@ -26,6 +26,8 @@ namespace profiler
 
 		m_Buffer.clear();
 		m_Buffer.reserve(reserveSize);
+		m_ThreadIds.clear();
+		m_NextThreadId = 1;
 		m_BufferFlushThreshold = static_cast<size_t>(0.9f * static_cast<float>(reserveSize));
 		m_BufferReserveSize = reserveSize;
 
@@ -41,15 +43,45 @@ namespace profiler
 			return;
 		}
 
+		auto const cat = std::string(isFunction ? "function" : "scope");
+		auto const tidHash = std::hash<std::thread::id>{}(result.threadID);
+
 		std::string entry;
-		entry += (m_FirstEntry ? R"({"cat":")" : R"(,{"cat":")") + std::string(isFunction ? "function" : "scope")
-			+ R"(","dur":)" + std::to_string(result.end - result.start)
-			+ R"(,"name":")" + result.name
-			+ R"(","ph":"X","pid":0,"tid":)" + std::to_string(std::hash<std::thread::id>{}(result.threadID))
-			+ R"(,"ts":)" + std::to_string(result.start)
-			+ "}";
 
 		std::lock_guard lock(m_Mutex);
+
+		auto const [it, inserted] = m_ThreadIds.emplace(tidHash, m_NextThreadId);
+		if (inserted)
+		{
+			auto const tid = std::to_string(m_NextThreadId);
+			++m_NextThreadId;
+
+			if (!m_FirstEntry)
+			{
+				m_Buffer += ',';
+			}
+			m_FirstEntry = false;
+
+			m_Buffer += R"({"name":"thread_name","ph":"M","pid":0,"tid":)" + tid
+				+ R"(,"args":{"name":"Thread )" + tid + R"("}})";
+		}
+
+		auto const tid = std::to_string(it->second);
+
+		entry += R"({"cat":")" + cat
+			+ R"(","name":")" + result.name
+			+ R"(","ph":"B","pid":0,"tid":)" + tid
+			+ R"(,"ts":)" + std::to_string(result.start)
+			+ R"(},{"cat":")" + cat
+			+ R"(","name":")" + result.name
+			+ R"(","ph":"E","pid":0,"tid":)" + tid
+			+ R"(,"ts":)" + std::to_string(result.end)
+			+ "}";
+
+		if (!m_FirstEntry)
+		{
+			m_Buffer += ',';
+		}
 		m_FirstEntry = false;
 		m_Buffer += entry;
 
