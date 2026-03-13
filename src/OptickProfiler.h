@@ -16,6 +16,9 @@ namespace profiler
 		OptickProfiler() = default;
 		~OptickProfiler() override = default;
 
+		/** @see Profiler::BeginSession */
+		void BeginSession(std::string const& name, char const* filepath = nullptr) override;
+
 		/** @see Profiler::WriteProfile */
 		void WriteProfile(ProfileResult const& result, bool isFunction) override;
 
@@ -29,9 +32,6 @@ namespace profiler
 		OptickProfiler(OptickProfiler&&) = delete;
 		OptickProfiler& operator=(OptickProfiler const&) = delete;
 		OptickProfiler& operator=(OptickProfiler&&) = delete;
-
-	private:
-		void BeginSessionInternal(std::string const& name, size_t reserveSize = 100'000) override;
 	};
 }
 

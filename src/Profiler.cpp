@@ -6,10 +6,10 @@
 
 namespace profiler
 {
-	void Profiler::BeginSession(std::string const& name, char const* path, size_t reserveSize)
+	void Profiler::BeginSession(std::string const& name, char const* path)
 	{
+		EndSession();
 		fileName = path ? path : "";
-		BeginSessionInternal(name, reserveSize);
 	}
 
 	void Profiler::Start(char const* path, FlushCallback callback)
@@ -22,14 +22,15 @@ namespace profiler
 		else
 		{
 			flushCallback = std::move(callback);
-			fileName = path ? path : "";
 
-			if (!fileName.empty())
+			std::string framePath;
+			if (path)
 			{
-				fileName += std::to_string(numExecutedProfiles);
+				framePath = path;
+				framePath += std::to_string(numExecutedProfiles);
 			}
 
-			BeginSessionInternal(fileName);
+			BeginSession("", framePath.empty() ? nullptr : framePath.c_str());
 			isProfiling = true;
 		}
 	}

@@ -25,9 +25,6 @@ namespace profiler
 		NullProfiler(NullProfiler&&) = delete;
 		NullProfiler& operator=(NullProfiler const&) = delete;
 		NullProfiler& operator=(NullProfiler&&) = delete;
-
-	private:
-		void BeginSessionInternal(std::string const& name, size_t reserveSize = 100'000) override {}
 	};
 }
 

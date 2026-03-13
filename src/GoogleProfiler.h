@@ -13,12 +13,6 @@
 
 namespace profiler
 {
-	/** Holds metadata for the current profiling session. */
-	struct InstrumentationSession final
-	{
-		std::string name;
-	};
-
 	/** Per-thread buffer that accumulates trace events without locking. */
 	struct ThreadBuffer final
 	{
@@ -36,6 +30,9 @@ namespace profiler
 		GoogleProfiler() = default;
 		~GoogleProfiler() override;
 
+		/** @see Profiler::BeginSession */
+		void BeginSession(std::string const& name, char const* filepath = nullptr) override;
+
 		/** @see Profiler::WriteProfile */
 		void WriteProfile(ProfileResult const& result, bool isFunction) override;
 
@@ -51,11 +48,10 @@ namespace profiler
 		GoogleProfiler& operator=(GoogleProfiler&&) = delete;
 
 	private:
-		void BeginSessionInternal(std::string const& name, size_t reserveSize = 100'000) override;
 		std::string BuildJson() const;
 
 		mutable std::mutex m_Mutex;
-		std::unique_ptr<InstrumentationSession> m_CurrentSession{ nullptr };
+		bool m_Active{ false };
 		std::vector<std::unique_ptr<ThreadBuffer>> m_ThreadBuffers;
 		uint32_t m_NextThreadId{ 1 };
 		uint32_t m_SessionId{ 0 };

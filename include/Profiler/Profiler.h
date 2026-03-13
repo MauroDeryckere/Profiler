@@ -25,11 +25,10 @@ namespace profiler
 
 		/**
 		 * Begins a new profiling session.
-		 * @param name			Display name for the session.
-		 * @param filepath		Output file path (extension is appended by the backend). Pass nullptr for string-only output via FlushToString().
-		 * @param reserveSize	Initial per-thread buffer reserve size in bytes.
+		 * @param name		Display name for the session.
+		 * @param filepath	Output file path (extension is appended by the backend). Pass nullptr for string-only output via FlushToString().
 		 */
-		void BeginSession(std::string const& name, char const* filepath = nullptr, size_t reserveSize = 100'000);
+		virtual void BeginSession(std::string const& name, char const* filepath = nullptr);
 
 		/** Ends the current session and flushes all buffered data to disk. */
 		virtual void EndSession() = 0;
@@ -89,8 +88,6 @@ namespace profiler
 		std::string fileName;
 
 	private:
-		virtual void BeginSessionInternal(std::string const& name, size_t reserveSize = 100'000) = 0;
-
 		uint32_t profiledFrames{ 0 };
 		bool isProfiling{ false };
 		uint32_t numExecutedProfiles{ 0 };

@@ -29,25 +29,18 @@ namespace profiler
 		EndSession();
 	}
 
-	void GoogleProfiler::BeginSessionInternal(std::string const& name, size_t reserveSize)
+	void GoogleProfiler::BeginSession(std::string const& name, char const* filepath)
 	{
-		EndSession();
-
-		if (!fileName.empty())
-		{
-			fileName += ".json";
-		}
-
+		Profiler::BeginSession(name, filepath);
 		m_ThreadBuffers.clear();
 		m_NextThreadId = 1;
 		m_SessionId = nextSessionId();
-
-		m_CurrentSession = std::make_unique<InstrumentationSession>(InstrumentationSession{ name });
+		m_Active = true;
 	}
 
 	void GoogleProfiler::WriteProfile(ProfileResult const& result, bool isFunction)
 	{
-		if (!m_CurrentSession)
+		if (!m_Active)
 		{
 			return;
 		}
@@ -128,31 +121,32 @@ namespace profiler
 
 	void GoogleProfiler::EndSession()
 	{
-		if (m_CurrentSession)
+		if (m_Active)
 		{
 			if (!fileName.empty())
 			{
-				PrepareOutputPath(fileName.c_str());
+				auto const path{ fileName + ".json" };
+				PrepareOutputPath(path.c_str());
 
-				std::ofstream out(fileName);
+				std::ofstream out(path);
 				if (out.is_open())
 				{
 					out << BuildJson();
 				}
 				else
 				{
-					fprintf(stderr, "[Profiler] Failed to open file: %s\n", fileName.c_str());
+					fprintf(stderr, "[Profiler] Failed to open file: %s\n", path.c_str());
 				}
 			}
 
 			m_ThreadBuffers.clear();
-			m_CurrentSession = nullptr;
+			m_Active = false;
 		}
 	}
 
 	std::string GoogleProfiler::FlushToString()
 	{
-		if (!m_CurrentSession)
+		if (!m_Active)
 		{
 			return {};
 		}

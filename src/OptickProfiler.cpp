@@ -5,11 +5,10 @@
 
 namespace profiler
 {
-	void OptickProfiler::BeginSessionInternal(std::string const& name, size_t reserveSize)
+	void OptickProfiler::BeginSession(std::string const& name, char const* filepath)
 	{
-		assert(!fileName.empty() && "OptickProfiler requires a file path — use BeginSession(name, filepath)");
-		fileName += ".opt";
-
+		assert(filepath && "OptickProfiler requires a file path — use BeginSession(name, filepath)");
+		Profiler::BeginSession(name, filepath);
 		OPTICK_START_CAPTURE()
 	}
 
@@ -20,9 +19,10 @@ namespace profiler
 
 	void OptickProfiler::EndSession()
 	{
-		PrepareOutputPath(fileName.c_str());
+		auto const path{ fileName + ".opt" };
+		PrepareOutputPath(path.c_str());
 
 		OPTICK_STOP_CAPTURE()
-		OPTICK_SAVE_CAPTURE(fileName.c_str())
+		OPTICK_SAVE_CAPTURE(path.c_str())
 	}
 }
