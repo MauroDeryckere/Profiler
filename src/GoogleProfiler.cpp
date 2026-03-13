@@ -3,6 +3,7 @@
 #include <atomic>
 #include <cinttypes>
 #include <cstdio>
+#include <fstream>
 
 namespace profiler
 {
@@ -35,16 +36,6 @@ namespace profiler
 		if (!fileName.empty())
 		{
 			fileName += ".json";
-
-			PrepareOutputPath(fileName.c_str());
-
-			m_OutputStream.open(fileName);
-
-			if (!m_OutputStream.is_open())
-			{
-				fprintf(stderr, "[Profiler] Failed to open file: %s\n", fileName.c_str());
-				return;
-			}
 		}
 
 		m_ThreadBuffers.clear();
@@ -139,10 +130,19 @@ namespace profiler
 	{
 		if (m_CurrentSession)
 		{
-			if (m_OutputStream.is_open())
+			if (!fileName.empty())
 			{
-				m_OutputStream << BuildJson();
-				m_OutputStream.close();
+				PrepareOutputPath(fileName.c_str());
+
+				std::ofstream out(fileName);
+				if (out.is_open())
+				{
+					out << BuildJson();
+				}
+				else
+				{
+					fprintf(stderr, "[Profiler] Failed to open file: %s\n", fileName.c_str());
+				}
 			}
 
 			m_ThreadBuffers.clear();

@@ -7,7 +7,6 @@
 
 #include "Profiler/Profiler.h"
 
-#include <fstream>
 #include <memory>
 #include <mutex>
 #include <vector>
@@ -58,7 +57,6 @@ namespace profiler
 		mutable std::mutex m_Mutex;
 		std::unique_ptr<InstrumentationSession> m_CurrentSession{ nullptr };
 		std::vector<std::unique_ptr<ThreadBuffer>> m_ThreadBuffers;
-		std::ofstream m_OutputStream;
 		uint32_t m_NextThreadId{ 1 };
 		uint32_t m_SessionId{ 0 };
 	};
