@@ -6,48 +6,26 @@
 
 namespace profiler
 {
-	void Profiler::BeginSession(std::string const& name, char const* path)
+	void Profiler::BeginSession(std::string const& name, char const* path, uint32_t maxFrames, FlushCallback callback)
 	{
 		EndSession();
 		fileName = path ? path : "";
+		this->maxFrames = maxFrames;
+		profiledFrames = 0;
+		flushCallback = std::move(callback);
 	}
 
-	void Profiler::Start(char const* path, FlushCallback callback)
+	void Profiler::Tick()
 	{
-		assert((path || callback) && "Start requires a file path or a flush callback");
-		if (isProfiling)
+		if (maxFrames == 0)
 		{
-			fprintf(stderr, "[Profiler] Already profiling: %s\n", fileName.c_str());
-		}
-		else
-		{
-			flushCallback = std::move(callback);
-
-			std::string framePath;
-			if (path)
-			{
-				framePath = path;
-				framePath += std::to_string(numExecutedProfiles);
-			}
-
-			BeginSession("", framePath.empty() ? nullptr : framePath.c_str());
-			isProfiling = true;
-		}
-	}
-
-	void Profiler::Update()
-	{
-		if (isProfiling)
-		{
-			++profiledFrames;
+			return;
 		}
 
-		if (profiledFrames >= numFramesToProfile)
-		{
-			++numExecutedProfiles;
-			profiledFrames = 0;
-			isProfiling = false;
+		++profiledFrames;
 
+		if (profiledFrames >= maxFrames)
+		{
 			if (flushCallback)
 			{
 				flushCallback(FlushToString());

@@ -90,13 +90,12 @@ void SimulateFrame(int frame)
 
 void RunFrameBasedDemo()
 {
-	PROFILER.SetNumFramesToProfile(5);
-	PROFILER.Start("profiling/frames");
+	PROFILER_BEGIN_SESSION("FrameDemo", "profiling/frames", 5);
 
 	for (int frame = 0; frame < 10; ++frame)
 	{
 		SimulateFrame(frame);
-		PROFILER_UPDATE(); // auto-ends after 5 frames
+		PROFILER_TICK(); // auto-ends after 5 frames
 	}
 }
 
@@ -106,8 +105,7 @@ void RunFrameBasedDemo()
 
 void RunStringOutputDemo()
 {
-	PROFILER.SetNumFramesToProfile(3);
-	PROFILER.Start(nullptr, [](std::string const& json)
+	PROFILER.BeginSession("CallbackDemo", nullptr, 3, [](std::string const& json)
 	{
 		std::cout << "  -> Callback received " << json.size() << " bytes of JSON\n";
 	});
@@ -115,7 +113,7 @@ void RunStringOutputDemo()
 	for (int frame = 0; frame < 3; ++frame)
 	{
 		SimulateFrame(frame);
-		PROFILER_UPDATE();
+		PROFILER_TICK();
 	}
 }
 
@@ -151,7 +149,7 @@ int main()
 	// --- Demo 3: Frame-based auto-stop profiling ---
 	std::cout << "\n=== Demo 3: Frame-Based Profiling (auto-stops after 5 frames) ===\n";
 	RunFrameBasedDemo();
-	std::cout << "  -> profiling/frames0.json\n";
+	std::cout << "  -> profiling/frames.json\n";
 
 	// --- Demo 4: String-only output with callback ---
 	std::cout << "\n=== Demo 4: String Output with Callback (no file) ===\n";

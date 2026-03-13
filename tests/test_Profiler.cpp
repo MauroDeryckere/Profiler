@@ -45,91 +45,92 @@ TEST_F(ProfilerBaseTest, PrepareOutputPathRemovesExistingFile)
 	EXPECT_FALSE(std::filesystem::exists(filePath));
 }
 
-TEST_F(ProfilerBaseTest, SetNumFramesToProfileRoundTrip)
-{
-	auto prof = std::make_unique<profiler::GoogleProfiler>();
-
-	prof->SetNumFramesToProfile(42);
-	EXPECT_EQ(prof->GetNumFramesToProfile(), 42u);
-}
-
-TEST_F(ProfilerBaseTest, StartAndUpdateAutoEndsSession)
+TEST_F(ProfilerBaseTest, TickAutoEndsSession)
 {
 	profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
 
-	PROFILER.SetNumFramesToProfile(3);
-	PROFILER.Start((TEST_DIR + "/autoend").c_str());
+	PROFILER.BeginSession("test", (TEST_DIR + "/autoend").c_str(), 3);
 
-	PROFILER.Update(); // frame 1
-	PROFILER.Update(); // frame 2
-	PROFILER.Update(); // frame 3 — should auto-end
+	PROFILER.Tick(); // frame 1
+	PROFILER.Tick(); // frame 2
+	PROFILER.Tick(); // frame 3 — should auto-end
 
-	// File should exist after auto-end (filename is path + "0" + ".json")
-	EXPECT_TRUE(std::filesystem::exists(TEST_DIR + "/autoend0.json"));
+	EXPECT_TRUE(std::filesystem::exists(TEST_DIR + "/autoend.json"));
 }
 
-TEST_F(ProfilerBaseTest, StartWhileProfilingDoesNotCrash)
+TEST_F(ProfilerBaseTest, TickNoOpWithoutFrameLimit)
 {
 	profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
 
-	PROFILER.SetNumFramesToProfile(100);
-	PROFILER.Start((TEST_DIR + "/first").c_str());
-	// Second Start while already profiling — should print warning but not crash
-	PROFILER.Start((TEST_DIR + "/second").c_str());
+	PROFILER.BeginSession("test", (TEST_DIR + "/manual").c_str());
 
-	// Cleanup
+	for (int i = 0; i < 100; ++i)
+	{
+		PROFILER.Tick();
+	}
+
+	// Session should still be active — manually end
 	PROFILER.EndSession();
+	EXPECT_TRUE(std::filesystem::exists(TEST_DIR + "/manual.json"));
 }
 
+TEST_F(ProfilerBaseTest, BeginSessionWhileActiveEndsFirst)
+{
+	profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
 
-TEST_F(ProfilerBaseTest, StartWithCallbackReceivesJson)
+	PROFILER.BeginSession("first", (TEST_DIR + "/first").c_str());
+	PROFILER.BeginSession("second", (TEST_DIR + "/second").c_str());
+
+	// First session should have been ended and written
+	EXPECT_TRUE(std::filesystem::exists(TEST_DIR + "/first.json"));
+
+	PROFILER.EndSession();
+	EXPECT_TRUE(std::filesystem::exists(TEST_DIR + "/second.json"));
+}
+
+TEST_F(ProfilerBaseTest, TickWithCallbackReceivesJson)
 {
 	profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
 
 	std::string captured;
-	PROFILER.SetNumFramesToProfile(2);
-	PROFILER.Start(nullptr, [&](std::string const& json) { captured = json; });
+	PROFILER.BeginSession("test", nullptr, 2, [&](std::string const& json) { captured = json; });
 
-	PROFILER.Update(); // frame 1
+	PROFILER.Tick(); // frame 1
 	EXPECT_TRUE(captured.empty());
 
-	PROFILER.Update(); // frame 2 — triggers callback
+	PROFILER.Tick(); // frame 2 — triggers callback
 	EXPECT_FALSE(captured.empty());
 	EXPECT_NE(captured.find("\"traceEvents\""), std::string::npos);
 }
 
-TEST_F(ProfilerBaseTest, StartWithFileAndCallbackBothWork)
+TEST_F(ProfilerBaseTest, TickWithFileAndCallbackBothWork)
 {
 	profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
 
 	std::string captured;
-	PROFILER.SetNumFramesToProfile(2);
-	PROFILER.Start((TEST_DIR + "/combo").c_str(), [&](std::string const& json) { captured = json; });
+	PROFILER.BeginSession("test", (TEST_DIR + "/combo").c_str(), 2, [&](std::string const& json) { captured = json; });
 
-	PROFILER.Update(); // frame 1
-	PROFILER.Update(); // frame 2 — triggers callback + file write
+	PROFILER.Tick(); // frame 1
+	PROFILER.Tick(); // frame 2 — triggers callback + file write
 
-	// Callback should have received JSON
 	EXPECT_FALSE(captured.empty());
 	EXPECT_NE(captured.find("\"traceEvents\""), std::string::npos);
 
-	// File should also have been written
-	EXPECT_TRUE(std::filesystem::exists(TEST_DIR + "/combo0.json"));
-	std::ifstream file(TEST_DIR + "/combo0.json");
+	EXPECT_TRUE(std::filesystem::exists(TEST_DIR + "/combo.json"));
+	std::ifstream file(TEST_DIR + "/combo.json");
 	std::string content{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
 	EXPECT_NE(content.find("\"traceEvents\""), std::string::npos);
 }
 
-TEST_F(ProfilerBaseTest, StartWithCallbackOnlyDoesNotCreateFile)
+TEST_F(ProfilerBaseTest, TickWithCallbackOnlyDoesNotCreateFile)
 {
 	profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
 
 	std::string captured;
-	PROFILER.SetNumFramesToProfile(2);
-	PROFILER.Start(nullptr, [&](std::string const& json) { captured = json; });
+	PROFILER.BeginSession("test", nullptr, 2, [&](std::string const& json) { captured = json; });
 
-	PROFILER.Update();
-	PROFILER.Update();
+	PROFILER.Tick();
+	PROFILER.Tick();
 
 	EXPECT_FALSE(captured.empty());
 	EXPECT_TRUE(std::filesystem::is_empty(TEST_DIR));

@@ -46,7 +46,7 @@
 
 	#define PROFILER_BEGIN_SESSION(name, ...) PROFILER.BeginSession(name, ##__VA_ARGS__)
 	#define PROFILER_END_SESSION()                 PROFILER.EndSession()
-	#define PROFILER_UPDATE()                      PROFILER.Update()
+	#define PROFILER_TICK()                      PROFILER.Tick()
 
 #else
 
@@ -56,7 +56,7 @@
 	#define PROFILER_FRAME(name)
 	#define PROFILER_BEGIN_SESSION(name, ...)
 	#define PROFILER_END_SESSION()
-	#define PROFILER_UPDATE()
+	#define PROFILER_TICK()
 
 #endif
 

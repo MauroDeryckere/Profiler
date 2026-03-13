@@ -23,12 +23,16 @@ namespace profiler
 	public:
 		virtual ~Profiler() = default;
 
+		using FlushCallback = std::function<void(std::string const&)>;
+
 		/**
 		 * Begins a new profiling session.
 		 * @param name		Display name for the session.
 		 * @param filepath	Output file path (extension is appended by the backend). Pass nullptr for string-only output via FlushToString().
+		 * @param maxFrames	If > 0, Tick() will auto-end the session after this many calls. 0 means manual EndSession() only.
+		 * @param callback	Called with the trace JSON when the session auto-ends via Tick().
 		 */
-		virtual void BeginSession(std::string const& name, char const* filepath = nullptr);
+		virtual void BeginSession(std::string const& name, char const* filepath = nullptr, uint32_t maxFrames = 0, FlushCallback callback = nullptr);
 
 		/** Ends the current session and flushes all buffered data to disk. */
 		virtual void EndSession() = 0;
@@ -50,28 +54,12 @@ namespace profiler
 		 */
 		virtual void WriteProfile(ProfileResult const& result, bool isFunction) = 0;
 
-		using FlushCallback = std::function<void(std::string const&)>;
-
 		/**
-		 * Starts a frame-based profiling session.
-		 * Call Update() each frame; the session auto-ends after GetNumFramesToProfile() frames.
-		 * @param path		Output file path (extension is appended by the backend). Pass nullptr to use a callback instead.
-		 * @param callback	Called with the trace JSON when the session auto-ends. Only used when path is nullptr.
+		 * Advances the frame counter. When the configured frame count is reached,
+		 * fires the flush callback (if set) then calls EndSession().
+		 * No-op if the session has no frame limit (maxFrames was 0 in BeginSession).
 		 */
-		void Start(char const* path, FlushCallback callback = nullptr);
-
-		/** Advances the frame counter. Ends the session automatically once the configured frame count is reached. */
-		void Update();
-
-		/**
-		 * Sets how many frames to capture before the session auto-ends.
-		 * Only applies to frame-based profiling via Start()/Update().
-		 * @param frames	Number of frames to profile before auto-stopping. Must be greater than 0.
-		 */
-		void SetNumFramesToProfile(uint32_t frames) { numFramesToProfile = frames; }
-
-		/** @return The number of frames to capture before auto-stopping. */
-		uint32_t GetNumFramesToProfile() const { return numFramesToProfile; }
+		void Tick();
 
 		/**
 		 * Creates parent directories for filepath and removes any existing file at that path.
@@ -90,9 +78,7 @@ namespace profiler
 
 	private:
 		uint32_t profiledFrames{ 0 };
-		bool isProfiling{ false };
-		uint32_t numExecutedProfiles{ 0 };
-		uint32_t numFramesToProfile{ 5 };
+		uint32_t maxFrames{ 0 };
 		FlushCallback flushCallback;
 	};
 }

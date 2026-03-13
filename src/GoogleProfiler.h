@@ -31,7 +31,7 @@ namespace profiler
 		~GoogleProfiler() override;
 
 		/** @see Profiler::BeginSession */
-		void BeginSession(std::string const& name, char const* filepath = nullptr) override;
+		void BeginSession(std::string const& name, char const* filepath = nullptr, uint32_t maxFrames = 0, FlushCallback callback = nullptr) override;
 
 		/** @see Profiler::WriteProfile */
 		void WriteProfile(ProfileResult const& result, bool isFunction) override;
