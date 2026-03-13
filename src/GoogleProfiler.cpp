@@ -31,16 +31,20 @@ namespace profiler
 	void GoogleProfiler::BeginSessionInternal(std::string const& name, size_t reserveSize)
 	{
 		EndSession();
-		fileName += ".json";
 
-		PrepareOutputPath(fileName.c_str());
-
-		m_OutputStream.open(fileName);
-
-		if (!m_OutputStream.is_open())
+		if (!fileName.empty())
 		{
-			fprintf(stderr, "[Profiler] Failed to open file: %s\n", fileName.c_str());
-			return;
+			fileName += ".json";
+
+			PrepareOutputPath(fileName.c_str());
+
+			m_OutputStream.open(fileName);
+
+			if (!m_OutputStream.is_open())
+			{
+				fprintf(stderr, "[Profiler] Failed to open file: %s\n", fileName.c_str());
+				return;
+			}
 		}
 
 		m_ThreadBuffers.clear();
@@ -109,30 +113,60 @@ namespace profiler
 		}
 	}
 
+	std::string GoogleProfiler::BuildJson() const
+	{
+		std::string json;
+		json += R"({"otherData":{},"traceEvents":[)";
+
+		bool first{ true };
+		for (auto const& tb : m_ThreadBuffers)
+		{
+			if (tb->data.empty()) continue;
+
+			if (!first)
+			{
+				json += ',';
+			}
+			first = false;
+			json += tb->data;
+		}
+
+		json += "]}";
+		return json;
+	}
+
 	void GoogleProfiler::EndSession()
 	{
 		if (m_CurrentSession)
 		{
-			m_OutputStream << R"({"otherData":{},"traceEvents":[)";
-
-			bool first{ true };
-			for (auto const& tb : m_ThreadBuffers)
+			if (m_OutputStream.is_open())
 			{
-				if (tb->data.empty()) continue;
-
-				if (!first)
-				{
-					m_OutputStream << ',';
-				}
-				first = false;
-				m_OutputStream << tb->data;
+				m_OutputStream << BuildJson();
+				m_OutputStream.close();
 			}
-
-			m_OutputStream << "]}";
-			m_OutputStream.close();
 
 			m_ThreadBuffers.clear();
 			m_CurrentSession = nullptr;
 		}
+	}
+
+	std::string GoogleProfiler::FlushToString()
+	{
+		if (!m_CurrentSession)
+		{
+			return {};
+		}
+
+		std::string json{ BuildJson() };
+
+		if (m_OutputStream.is_open())
+		{
+			m_OutputStream.close();
+		}
+
+		m_ThreadBuffers.clear();
+		m_CurrentSession = nullptr;
+
+		return json;
 	}
 }

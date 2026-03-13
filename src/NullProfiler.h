@@ -18,6 +18,9 @@ namespace profiler
 		/** @see Profiler::EndSession */
 		void EndSession() override {}
 
+		/** @see Profiler::FlushToString */
+		std::string FlushToString() override { return {}; }
+
 		NullProfiler(NullProfiler const&) = delete;
 		NullProfiler(NullProfiler&&) = delete;
 		NullProfiler& operator=(NullProfiler const&) = delete;

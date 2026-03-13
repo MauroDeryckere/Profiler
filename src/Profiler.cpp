@@ -11,6 +11,12 @@ namespace profiler
 		BeginSessionInternal(name, reserveSize);
 	}
 
+	void Profiler::BeginSession(std::string const& name, size_t reserveSize)
+	{
+		fileName.clear();
+		BeginSessionInternal(name, reserveSize);
+	}
+
 	void Profiler::Start(char const* path)
 	{
 		if (isProfiling)

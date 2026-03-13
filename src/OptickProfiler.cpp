@@ -7,6 +7,7 @@ namespace profiler
 {
 	void OptickProfiler::BeginSessionInternal(std::string const& name, size_t reserveSize)
 	{
+		assert(!fileName.empty() && "OptickProfiler requires a file path — use BeginSession(name, filepath)");
 		fileName += ".opt";
 
 		OPTICK_START_CAPTURE()

@@ -23,15 +23,32 @@ namespace profiler
 		virtual ~Profiler() = default;
 
 		/**
-		 * Begins a new profiling session.
+		 * Begins a new profiling session that writes to a file.
 		 * @param name			Display name for the session.
 		 * @param filepath		Output file path (extension is appended by the backend).
 		 * @param reserveSize	Initial per-thread buffer reserve size in bytes.
 		 */
 		void BeginSession(std::string const& name, char const* filepath, size_t reserveSize = 100'000);
 
+		/**
+		 * Begins a new profiling session without file output.
+		 * Use FlushToString() to retrieve the trace data.
+		 * @param name			Display name for the session.
+		 * @param reserveSize	Initial per-thread buffer reserve size in bytes.
+		 */
+		void BeginSession(std::string const& name, size_t reserveSize = 100'000);
+
 		/** Ends the current session and flushes all buffered data to disk. */
 		virtual void EndSession() = 0;
+
+		/**
+		 * Returns the current session's buffered trace data as a JSON string
+		 * and ends the session without writing to disk.
+		 * Useful for environments without filesystem access (e.g. Emscripten)
+		 * or for streaming data to a custom sink.
+		 * @return The complete trace JSON, or an empty string if no session is active.
+		 */
+		virtual std::string FlushToString() = 0;
 
 		/**
 		 * Writes a single profile event. Pass start=-1 for an end-only event,

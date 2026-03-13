@@ -190,3 +190,57 @@ TEST_F(GoogleProfilerTest, NoEmptyEventInOutput)
 	// Should start with [{ not [{},  (no empty event)
 	EXPECT_EQ(content.find("[{}"), std::string::npos);
 }
+
+TEST_F(GoogleProfilerTest, FlushToStringReturnsValidJson)
+{
+	profiler::GoogleProfiler p;
+	p.BeginSession("test", (TEST_DIR + "/output").c_str());
+
+	profiler::ProfileResult result{ "Flushed", 0, 500, std::this_thread::get_id() };
+	p.WriteProfile(result, true);
+
+	auto json = p.FlushToString();
+	EXPECT_FALSE(json.empty());
+	EXPECT_EQ(json.front(), '{');
+	EXPECT_EQ(json.back(), '}');
+	EXPECT_NE(json.find("\"Flushed\""), std::string::npos);
+	EXPECT_NE(json.find("\"traceEvents\""), std::string::npos);
+}
+
+TEST_F(GoogleProfilerTest, FlushToStringWithoutSessionReturnsEmpty)
+{
+	profiler::GoogleProfiler p;
+	auto json = p.FlushToString();
+	EXPECT_TRUE(json.empty());
+}
+
+TEST_F(GoogleProfilerTest, FlushToStringEndsSession)
+{
+	profiler::GoogleProfiler p;
+	p.BeginSession("test", (TEST_DIR + "/output").c_str());
+
+	profiler::ProfileResult result{ "Entry", 0, 100, std::this_thread::get_id() };
+	p.WriteProfile(result, true);
+
+	auto json = p.FlushToString();
+	EXPECT_FALSE(json.empty());
+
+	// Session should be ended — second flush returns empty
+	auto json2 = p.FlushToString();
+	EXPECT_TRUE(json2.empty());
+}
+
+TEST_F(GoogleProfilerTest, BeginSessionWithoutFileDoesNotCreateFile)
+{
+	profiler::GoogleProfiler p;
+	p.BeginSession("test");
+
+	profiler::ProfileResult result{ "NoFile", 0, 100, std::this_thread::get_id() };
+	p.WriteProfile(result, true);
+
+	auto json = p.FlushToString();
+	EXPECT_NE(json.find("\"NoFile\""), std::string::npos);
+
+	// No file should have been created anywhere in test dir
+	EXPECT_TRUE(std::filesystem::is_empty(TEST_DIR));
+}

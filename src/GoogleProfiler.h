@@ -43,6 +43,9 @@ namespace profiler
 		/** @see Profiler::EndSession */
 		void EndSession() override;
 
+		/** @see Profiler::FlushToString */
+		std::string FlushToString() override;
+
 		GoogleProfiler(GoogleProfiler const&) = delete;
 		GoogleProfiler(GoogleProfiler&&) = delete;
 		GoogleProfiler& operator=(GoogleProfiler const&) = delete;
@@ -50,6 +53,7 @@ namespace profiler
 
 	private:
 		void BeginSessionInternal(std::string const& name, size_t reserveSize = 100'000) override;
+		std::string BuildJson() const;
 
 		mutable std::mutex m_Mutex;
 		std::unique_ptr<InstrumentationSession> m_CurrentSession{ nullptr };

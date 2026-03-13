@@ -22,6 +22,9 @@ namespace profiler
 		/** @see Profiler::EndSession */
 		void EndSession() override;
 
+		/** @see Profiler::FlushToString */
+		std::string FlushToString() override { return {}; }
+
 		OptickProfiler(OptickProfiler const&) = delete;
 		OptickProfiler(OptickProfiler&&) = delete;
 		OptickProfiler& operator=(OptickProfiler const&) = delete;
