@@ -10,7 +10,7 @@ namespace profiler
 	namespace ServiceLocator
 	{
 		/** @return Reference to the currently registered profiler backend. */
-		Profiler& GetProfiler();
+		[[nodiscard]] Profiler& GetProfiler() noexcept;
 
 		/**
 		 * Registers a profiler backend. Replaces any previously registered instance.

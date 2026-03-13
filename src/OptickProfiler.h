@@ -26,7 +26,7 @@ namespace profiler
 		void EndSession() override;
 
 		/** @see Profiler::FlushToString */
-		std::string FlushToString() override { return {}; }
+		[[nodiscard]] std::string FlushToString() const noexcept override { return {}; }
 
 		OptickProfiler(OptickProfiler const&) = delete;
 		OptickProfiler(OptickProfiler&&) = delete;

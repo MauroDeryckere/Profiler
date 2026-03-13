@@ -40,7 +40,7 @@ namespace profiler
 		void EndSession() override;
 
 		/** @see Profiler::FlushToString */
-		std::string FlushToString() override;
+		[[nodiscard]] std::string FlushToString() const override;
 
 		GoogleProfiler(GoogleProfiler const&) = delete;
 		GoogleProfiler(GoogleProfiler&&) = delete;
@@ -48,7 +48,7 @@ namespace profiler
 		GoogleProfiler& operator=(GoogleProfiler&&) = delete;
 
 	private:
-		std::string BuildJson() const;
+		[[nodiscard]] std::string BuildJson() const;
 
 		mutable std::mutex m_Mutex;
 		bool m_Active{ false };

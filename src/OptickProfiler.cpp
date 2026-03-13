@@ -19,7 +19,7 @@ namespace profiler
 
 	void OptickProfiler::EndSession()
 	{
-		auto const path{ fileName + ".opt" };
+		auto const path{ m_FileName + ".opt" };
 		PrepareOutputPath(path.c_str());
 
 		OPTICK_STOP_CAPTURE()

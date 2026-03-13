@@ -9,27 +9,27 @@ namespace profiler
 	void Profiler::BeginSession(std::string const& name, char const* path, uint32_t maxFrames, FlushCallback callback)
 	{
 		EndSession();
-		fileName = path ? path : "";
-		this->maxFrames = maxFrames;
-		profiledFrames = 0;
-		flushCallback = std::move(callback);
+		m_FileName = path ? path : "";
+		m_MaxFrames = maxFrames;
+		m_ProfiledFrames = 0;
+		m_FlushCallback = std::move(callback);
 	}
 
 	void Profiler::Tick()
 	{
-		if (maxFrames == 0)
+		if (m_MaxFrames == 0)
 		{
 			return;
 		}
 
-		++profiledFrames;
+		++m_ProfiledFrames;
 
-		if (profiledFrames >= maxFrames)
+		if (m_ProfiledFrames >= m_MaxFrames)
 		{
-			if (flushCallback)
+			if (m_FlushCallback)
 			{
-				flushCallback(FlushToString());
-				flushCallback = nullptr;
+				m_FlushCallback(FlushToString());
+				m_FlushCallback = nullptr;
 			}
 
 			EndSession();

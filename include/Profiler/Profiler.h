@@ -39,12 +39,12 @@ namespace profiler
 
 		/**
 		 * Returns the current session's buffered trace data as a JSON string
-		 * and ends the session without writing to disk.
+		 * without ending the session.
 		 * Useful for environments without filesystem access (e.g. Emscripten)
 		 * or for streaming data to a custom sink.
 		 * @return The complete trace JSON, or an empty string if no session is active.
 		 */
-		virtual std::string FlushToString() = 0;
+		[[nodiscard]] virtual std::string FlushToString() const = 0;
 
 		/**
 		 * Writes a single profile event. Pass start=-1 for an end-only event,
@@ -74,12 +74,12 @@ namespace profiler
 
 	protected:
 		Profiler() = default;
-		std::string fileName;
+		std::string m_FileName;
 
 	private:
-		uint32_t profiledFrames{ 0 };
-		uint32_t maxFrames{ 0 };
-		FlushCallback flushCallback;
+		uint32_t m_ProfiledFrames{ 0 };
+		uint32_t m_MaxFrames{ 0 };
+		FlushCallback m_FlushCallback;
 	};
 }
 

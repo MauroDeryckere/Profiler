@@ -21,7 +21,7 @@ namespace profiler
 #endif
 	}
 
-	Profiler& ServiceLocator::GetProfiler()
+	Profiler& ServiceLocator::GetProfiler() noexcept
 	{
 		return *g_pProfiler;
 	}

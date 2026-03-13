@@ -123,9 +123,9 @@ namespace profiler
 	{
 		if (m_Active)
 		{
-			if (!fileName.empty())
+			if (!m_FileName.empty())
 			{
-				auto const path{ fileName + ".json" };
+				auto const path{ m_FileName + ".json" };
 				PrepareOutputPath(path.c_str());
 
 				std::ofstream out(path);
@@ -144,7 +144,7 @@ namespace profiler
 		}
 	}
 
-	std::string GoogleProfiler::FlushToString()
+	std::string GoogleProfiler::FlushToString() const
 	{
 		if (!m_Active)
 		{
