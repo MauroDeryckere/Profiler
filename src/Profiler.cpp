@@ -7,13 +7,7 @@ namespace profiler
 {
 	void Profiler::BeginSession(std::string const& name, char const* path, size_t reserveSize)
 	{
-		fileName = path;
-		BeginSessionInternal(name, reserveSize);
-	}
-
-	void Profiler::BeginSession(std::string const& name, size_t reserveSize)
-	{
-		fileName.clear();
+		fileName = path ? path : "";
 		BeginSessionInternal(name, reserveSize);
 	}
 
