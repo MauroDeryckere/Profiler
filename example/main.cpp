@@ -101,6 +101,25 @@ void RunFrameBasedDemo()
 }
 
 // ---------------------------------------------------------------------------
+// String-only output (no file) + frame callback
+// ---------------------------------------------------------------------------
+
+void RunStringOutputDemo()
+{
+	PROFILER.SetMaxFrames(3);
+	PROFILER.Start(nullptr, [](std::string const& json)
+	{
+		std::cout << "  -> Callback received " << json.size() << " bytes of JSON\n";
+	});
+
+	for (int frame = 0; frame < 3; ++frame)
+	{
+		SimulateFrame(frame);
+		PROFILER_UPDATE();
+	}
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -133,6 +152,23 @@ int main()
 	std::cout << "\n=== Demo 3: Frame-Based Profiling (auto-stops after 5 frames) ===\n";
 	RunFrameBasedDemo();
 	std::cout << "  -> profiling/frames0.json\n";
+
+	// --- Demo 4: String-only output with callback ---
+	std::cout << "\n=== Demo 4: String Output with Callback (no file) ===\n";
+	RunStringOutputDemo();
+
+	// --- Demo 5: Manual FlushToString ---
+	std::cout << "\n=== Demo 5: Manual FlushToString ===\n";
+	PROFILER_BEGIN_SESSION("FlushDemo");
+	{
+		PROFILER_SCOPE("SomeWork");
+		volatile double x = 0.0;
+		for (int i = 0; i < 100'000; ++i)
+			x += static_cast<double>(i);
+	}
+	auto json = PROFILER.FlushToString();
+	std::cout << "  -> FlushToString returned " << json.size() << " bytes\n";
+	PROFILER_END_SESSION();
 
 	std::cout << "\nAll done! Open .json files in chrome://tracing or https://ui.perfetto.dev\n";
 	return 0;

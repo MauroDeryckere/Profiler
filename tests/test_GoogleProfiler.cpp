@@ -214,7 +214,7 @@ TEST_F(GoogleProfilerTest, FlushToStringWithoutSessionReturnsEmpty)
 	EXPECT_TRUE(json.empty());
 }
 
-TEST_F(GoogleProfilerTest, FlushToStringEndsSession)
+TEST_F(GoogleProfilerTest, FlushToStringIsReadOnly)
 {
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
@@ -222,12 +222,36 @@ TEST_F(GoogleProfilerTest, FlushToStringEndsSession)
 	profiler::ProfileResult result{ "Entry", 0, 100, std::this_thread::get_id() };
 	p.WriteProfile(result, true);
 
-	auto json = p.FlushToString();
-	EXPECT_FALSE(json.empty());
+	auto json1 = p.FlushToString();
+	EXPECT_FALSE(json1.empty());
 
-	// Session should be ended — second flush returns empty
+	// FlushToString is read-only — calling it again returns the same data
 	auto json2 = p.FlushToString();
-	EXPECT_TRUE(json2.empty());
+	EXPECT_EQ(json1, json2);
+
+	p.EndSession();
+}
+
+TEST_F(GoogleProfilerTest, FlushToStringMidSessionReturnsSnapshot)
+{
+	profiler::GoogleProfiler p;
+	p.BeginSession("test", (TEST_DIR + "/output").c_str());
+
+	profiler::ProfileResult r1{ "First", 0, 100, std::this_thread::get_id() };
+	p.WriteProfile(r1, true);
+
+	auto snapshot = p.FlushToString();
+	EXPECT_NE(snapshot.find("\"First\""), std::string::npos);
+
+	// Write more data after snapshot
+	profiler::ProfileResult r2{ "Second", 100, 200, std::this_thread::get_id() };
+	p.WriteProfile(r2, true);
+
+	auto full = p.FlushToString();
+	EXPECT_NE(full.find("\"First\""), std::string::npos);
+	EXPECT_NE(full.find("\"Second\""), std::string::npos);
+
+	p.EndSession();
 }
 
 TEST_F(GoogleProfilerTest, BeginSessionWithoutFileDoesNotCreateFile)
@@ -241,6 +265,26 @@ TEST_F(GoogleProfilerTest, BeginSessionWithoutFileDoesNotCreateFile)
 	auto json = p.FlushToString();
 	EXPECT_NE(json.find("\"NoFile\""), std::string::npos);
 
+	p.EndSession();
+
 	// No file should have been created anywhere in test dir
 	EXPECT_TRUE(std::filesystem::is_empty(TEST_DIR));
+}
+
+TEST_F(GoogleProfilerTest, EndSessionWritesFileAfterFlushToString)
+{
+	profiler::GoogleProfiler p;
+	p.BeginSession("test", (TEST_DIR + "/output").c_str());
+
+	profiler::ProfileResult result{ "Both", 0, 100, std::this_thread::get_id() };
+	p.WriteProfile(result, true);
+
+	auto json = p.FlushToString();
+	EXPECT_NE(json.find("\"Both\""), std::string::npos);
+
+	p.EndSession();
+
+	// File should also have been written
+	auto content = ReadFileContents(TEST_DIR + "/output.json");
+	EXPECT_NE(content.find("\"Both\""), std::string::npos);
 }

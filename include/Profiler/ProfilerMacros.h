@@ -44,7 +44,7 @@
 		#define PROFILER_FRAME(name)
 	#endif
 
-	#define PROFILER_BEGIN_SESSION(name, filepath) PROFILER.BeginSession(name, filepath)
+	#define PROFILER_BEGIN_SESSION(name, ...) PROFILER.BeginSession(name, ##__VA_ARGS__)
 	#define PROFILER_END_SESSION()                 PROFILER.EndSession()
 	#define PROFILER_UPDATE()                      PROFILER.Update()
 
@@ -54,7 +54,7 @@
 	#define PROFILER_SCOPE(name)
 	#define PROFILER_THREAD(name)
 	#define PROFILER_FRAME(name)
-	#define PROFILER_BEGIN_SESSION(name, filepath)
+	#define PROFILER_BEGIN_SESSION(name, ...)
 	#define PROFILER_END_SESSION()
 	#define PROFILER_UPDATE()
 

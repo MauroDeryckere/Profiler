@@ -157,16 +157,6 @@ namespace profiler
 			return {};
 		}
 
-		std::string json{ BuildJson() };
-
-		if (m_OutputStream.is_open())
-		{
-			m_OutputStream.close();
-		}
-
-		m_ThreadBuffers.clear();
-		m_CurrentSession = nullptr;
-
-		return json;
+		return BuildJson();
 	}
 }

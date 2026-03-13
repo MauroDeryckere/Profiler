@@ -2,6 +2,7 @@
 #define PROFILER_PROFILER_H
 
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <thread>
 
@@ -50,12 +51,15 @@ namespace profiler
 		 */
 		virtual void WriteProfile(ProfileResult const& result, bool isFunction) = 0;
 
+		using FlushCallback = std::function<void(std::string const&)>;
+
 		/**
-		 * Starts a frame-based profiling session at the given path.
+		 * Starts a frame-based profiling session.
 		 * Call Update() each frame; the session auto-ends after GetMaxFrames() frames.
-		 * @param path	Output file path (extension is appended by the backend).
+		 * @param path		Output file path (extension is appended by the backend). Pass nullptr to use a callback instead.
+		 * @param callback	Called with the trace JSON when the session auto-ends. Only used when path is nullptr.
 		 */
-		void Start(char const* path);
+		void Start(char const* path, FlushCallback callback = nullptr);
 
 		/** Advances the frame counter. Ends the session automatically once max frames is reached. */
 		void Update();
@@ -91,6 +95,7 @@ namespace profiler
 		bool isProfiling{ false };
 		uint32_t numExecutedProfiles{ 0 };
 		uint32_t maxFrames{ 5 };
+		FlushCallback flushCallback;
 	};
 }
 

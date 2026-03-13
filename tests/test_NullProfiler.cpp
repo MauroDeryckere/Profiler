@@ -34,3 +34,11 @@ TEST(NullProfiler, EndSessionWithoutBeginIsSafe)
 	profiler::NullProfiler p;
 	p.EndSession();
 }
+
+TEST(NullProfiler, FlushToStringReturnsEmpty)
+{
+	profiler::NullProfiler p;
+	p.BeginSession("test");
+	EXPECT_TRUE(p.FlushToString().empty());
+	p.EndSession();
+}

@@ -1,5 +1,6 @@
 #include "Profiler/Profiler.h"
 
+#include <cassert>
 #include <cstdio>
 #include <filesystem>
 
@@ -11,16 +12,22 @@ namespace profiler
 		BeginSessionInternal(name, reserveSize);
 	}
 
-	void Profiler::Start(char const* path)
+	void Profiler::Start(char const* path, FlushCallback callback)
 	{
+		assert((path || callback) && "Start requires a file path or a flush callback");
 		if (isProfiling)
 		{
 			fprintf(stderr, "[Profiler] Already profiling: %s\n", fileName.c_str());
 		}
 		else
 		{
-			fileName = path;
-			fileName += std::to_string(numExecutedProfiles);
+			flushCallback = std::move(callback);
+			fileName = path ? path : "";
+
+			if (!fileName.empty())
+			{
+				fileName += std::to_string(numExecutedProfiles);
+			}
 
 			BeginSessionInternal(fileName);
 			isProfiling = true;
@@ -40,12 +47,19 @@ namespace profiler
 			profiledFrames = 0;
 			isProfiling = false;
 
+			if (flushCallback)
+			{
+				flushCallback(FlushToString());
+				flushCallback = nullptr;
+			}
+
 			EndSession();
 		}
 	}
 
 	void Profiler::PrepareOutputPath(char const* filepath)
 	{
+		assert(filepath && "PrepareOutputPath requires a non-null filepath");
 		std::filesystem::path const dir{ std::filesystem::path(filepath).parent_path() };
 
 		if (!dir.empty() && !std::filesystem::exists(dir))
