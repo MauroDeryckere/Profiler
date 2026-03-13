@@ -54,23 +54,24 @@ namespace profiler
 
 		/**
 		 * Starts a frame-based profiling session.
-		 * Call Update() each frame; the session auto-ends after GetMaxFrames() frames.
+		 * Call Update() each frame; the session auto-ends after GetNumFramesToProfile() frames.
 		 * @param path		Output file path (extension is appended by the backend). Pass nullptr to use a callback instead.
 		 * @param callback	Called with the trace JSON when the session auto-ends. Only used when path is nullptr.
 		 */
 		void Start(char const* path, FlushCallback callback = nullptr);
 
-		/** Advances the frame counter. Ends the session automatically once max frames is reached. */
+		/** Advances the frame counter. Ends the session automatically once the configured frame count is reached. */
 		void Update();
 
 		/**
-		 * Sets the maximum number of frames to capture in frame-based profiling.
-		 * @param frames	Number of frames before auto-stopping.
+		 * Sets how many frames to capture before the session auto-ends.
+		 * Only applies to frame-based profiling via Start()/Update().
+		 * @param frames	Number of frames to profile before auto-stopping. Must be greater than 0.
 		 */
-		void SetMaxFrames(uint32_t frames) { maxFrames = frames; }
+		void SetNumFramesToProfile(uint32_t frames) { numFramesToProfile = frames; }
 
-		/** @return The maximum number of frames to capture. */
-		uint32_t GetMaxFrames() const { return maxFrames; }
+		/** @return The number of frames to capture before auto-stopping. */
+		uint32_t GetNumFramesToProfile() const { return numFramesToProfile; }
 
 		/**
 		 * Creates parent directories for filepath and removes any existing file at that path.
@@ -91,7 +92,7 @@ namespace profiler
 		uint32_t profiledFrames{ 0 };
 		bool isProfiling{ false };
 		uint32_t numExecutedProfiles{ 0 };
-		uint32_t maxFrames{ 5 };
+		uint32_t numFramesToProfile{ 5 };
 		FlushCallback flushCallback;
 	};
 }

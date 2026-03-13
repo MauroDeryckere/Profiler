@@ -90,7 +90,7 @@ void SimulateFrame(int frame)
 
 void RunFrameBasedDemo()
 {
-	PROFILER.SetMaxFrames(5);
+	PROFILER.SetNumFramesToProfile(5);
 	PROFILER.Start("profiling/frames");
 
 	for (int frame = 0; frame < 10; ++frame)
@@ -106,7 +106,7 @@ void RunFrameBasedDemo()
 
 void RunStringOutputDemo()
 {
-	PROFILER.SetMaxFrames(3);
+	PROFILER.SetNumFramesToProfile(3);
 	PROFILER.Start(nullptr, [](std::string const& json)
 	{
 		std::cout << "  -> Callback received " << json.size() << " bytes of JSON\n";

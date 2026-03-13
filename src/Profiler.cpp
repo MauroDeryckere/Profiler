@@ -42,7 +42,7 @@ namespace profiler
 			++profiledFrames;
 		}
 
-		if (maxFrames > 0 && profiledFrames >= maxFrames)
+		if (profiledFrames >= numFramesToProfile)
 		{
 			++numExecutedProfiles;
 			profiledFrames = 0;

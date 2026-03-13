@@ -45,22 +45,19 @@ TEST_F(ProfilerBaseTest, PrepareOutputPathRemovesExistingFile)
 	EXPECT_FALSE(std::filesystem::exists(filePath));
 }
 
-TEST_F(ProfilerBaseTest, SetMaxFramesRoundTrip)
+TEST_F(ProfilerBaseTest, SetNumFramesToProfileRoundTrip)
 {
 	auto prof = std::make_unique<profiler::GoogleProfiler>();
 
-	prof->SetMaxFrames(42);
-	EXPECT_EQ(prof->GetMaxFrames(), 42u);
-
-	prof->SetMaxFrames(0);
-	EXPECT_EQ(prof->GetMaxFrames(), 0u);
+	prof->SetNumFramesToProfile(42);
+	EXPECT_EQ(prof->GetNumFramesToProfile(), 42u);
 }
 
 TEST_F(ProfilerBaseTest, StartAndUpdateAutoEndsSession)
 {
 	profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
 
-	PROFILER.SetMaxFrames(3);
+	PROFILER.SetNumFramesToProfile(3);
 	PROFILER.Start((TEST_DIR + "/autoend").c_str());
 
 	PROFILER.Update(); // frame 1
@@ -75,7 +72,7 @@ TEST_F(ProfilerBaseTest, StartWhileProfilingDoesNotCrash)
 {
 	profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
 
-	PROFILER.SetMaxFrames(100);
+	PROFILER.SetNumFramesToProfile(100);
 	PROFILER.Start((TEST_DIR + "/first").c_str());
 	// Second Start while already profiling — should print warning but not crash
 	PROFILER.Start((TEST_DIR + "/second").c_str());
@@ -84,30 +81,13 @@ TEST_F(ProfilerBaseTest, StartWhileProfilingDoesNotCrash)
 	PROFILER.EndSession();
 }
 
-TEST_F(ProfilerBaseTest, UpdateWithZeroMaxFramesNeverAutoEnds)
-{
-	profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
-
-	PROFILER.SetMaxFrames(0);
-	PROFILER.Start((TEST_DIR + "/infinite").c_str());
-
-	for (int i = 0; i < 100; ++i)
-	{
-		PROFILER.Update();
-	}
-
-	// Should still be running — no auto-created file
-	// Manually end to clean up
-	PROFILER.EndSession();
-	SUCCEED();
-}
 
 TEST_F(ProfilerBaseTest, StartWithCallbackReceivesJson)
 {
 	profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
 
 	std::string captured;
-	PROFILER.SetMaxFrames(2);
+	PROFILER.SetNumFramesToProfile(2);
 	PROFILER.Start(nullptr, [&](std::string const& json) { captured = json; });
 
 	PROFILER.Update(); // frame 1
@@ -123,7 +103,7 @@ TEST_F(ProfilerBaseTest, StartWithFileAndCallbackBothWork)
 	profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
 
 	std::string captured;
-	PROFILER.SetMaxFrames(2);
+	PROFILER.SetNumFramesToProfile(2);
 	PROFILER.Start((TEST_DIR + "/combo").c_str(), [&](std::string const& json) { captured = json; });
 
 	PROFILER.Update(); // frame 1
@@ -145,7 +125,7 @@ TEST_F(ProfilerBaseTest, StartWithCallbackOnlyDoesNotCreateFile)
 	profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
 
 	std::string captured;
-	PROFILER.SetMaxFrames(2);
+	PROFILER.SetNumFramesToProfile(2);
 	PROFILER.Start(nullptr, [&](std::string const& json) { captured = json; });
 
 	PROFILER.Update();
