@@ -190,7 +190,3 @@ cmake/                     CMake package config
 - C++17 compiler (MSVC 2017+, GCC 7+, Clang 5+)
 - CMake 3.16+
 - (Optional) [Optick](https://github.com/bombomby/optick) for the Optick backend
-
-## License
-
-[Choose your license]
