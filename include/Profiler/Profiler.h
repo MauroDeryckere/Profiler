@@ -5,7 +5,6 @@
 #include <functional>
 #include <string>
 #include <string_view>
-#include <thread>
 
 namespace profiler
 {
@@ -15,7 +14,6 @@ namespace profiler
 		std::string_view name;
 		int64_t start;
 		int64_t end;
-		std::thread::id threadID;
 	};
 
 	/** Abstract base class for all profiler backends. */

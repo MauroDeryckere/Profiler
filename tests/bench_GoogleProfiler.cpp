@@ -76,7 +76,7 @@ TEST_F(ProfilerBench, WriteProfileThroughput)
 	{
 		profiler::GoogleProfiler p;
 		p.BeginSession("bench");
-		profiler::ProfileResult result{ "BenchFunc", 0, 100, std::this_thread::get_id() };
+		profiler::ProfileResult result{ "BenchFunc", 0, 100};
 
 		auto const start{ Now() };
 		for (uint32_t i{ 0 }; i < ITERATIONS; ++i)
@@ -111,7 +111,7 @@ TEST_F(ProfilerBench, WriteProfileMultiThreaded)
 			threads.emplace_back([&p, t, ITERATIONS_PER_THREAD]()
 			{
 				std::string const name{ std::format("Thread{}", t) };
-				profiler::ProfileResult const result{ name, 0, 100, std::this_thread::get_id() };
+				profiler::ProfileResult const result{ name, 0, 100};
 				for (uint32_t i{ 0 }; i < ITERATIONS_PER_THREAD; ++i)
 				{
 					p.WriteProfile(result, true);
@@ -143,7 +143,7 @@ TEST_F(ProfilerBench, SessionLifecycle)
 		{
 			profiler::GoogleProfiler p;
 			p.BeginSession("bench", (BENCH_DIR + "/lifecycle").c_str());
-			profiler::ProfileResult result{ "Func", 0, 100, std::this_thread::get_id() };
+			profiler::ProfileResult result{ "Func", 0, 100};
 			p.WriteProfile(result, true);
 			p.EndSession();
 		}
@@ -166,7 +166,7 @@ TEST_F(ProfilerBench, FlushToStringCost)
 
 		for (uint32_t i{ 0 }; i < NUM_WRITE_PROFILES; ++i)
 		{
-			profiler::ProfileResult result{ "Entry", 0, 100, std::this_thread::get_id() };
+			profiler::ProfileResult result{ "Entry", 0, 100};
 			p.WriteProfile(result, true);
 		}
 

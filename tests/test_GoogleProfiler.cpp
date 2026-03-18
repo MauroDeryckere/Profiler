@@ -56,7 +56,7 @@ TEST_F(GoogleProfilerTest, WriteProfileProducesEntry)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	profiler::ProfileResult const result{ "MyFunction", 1000, 2000, std::this_thread::get_id() };
+	profiler::ProfileResult const result{ "MyFunction", 1000, 2000};
 	p.WriteProfile(result, true);
 
 	p.EndSession();
@@ -73,7 +73,7 @@ TEST_F(GoogleProfilerTest, ScopeCategory)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	profiler::ProfileResult const result{ "MyScope", 0, 500, std::this_thread::get_id() };
+	profiler::ProfileResult const result{ "MyScope", 0, 500};
 	p.WriteProfile(result, false);
 
 	p.EndSession();
@@ -87,8 +87,8 @@ TEST_F(GoogleProfilerTest, MultipleEntriesAreSeparated)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	profiler::ProfileResult const r1{ "First", 0, 100, std::this_thread::get_id() };
-	profiler::ProfileResult const r2{ "Second", 100, 200, std::this_thread::get_id() };
+	profiler::ProfileResult const r1{ "First", 0, 100};
+	profiler::ProfileResult const r2{ "Second", 100, 200};
 	p.WriteProfile(r1, true);
 	p.WriteProfile(r2, true);
 
@@ -104,7 +104,7 @@ TEST_F(GoogleProfilerTest, ThreadIdIsCaptured)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	profiler::ProfileResult const result{ "Threaded", 0, 100, std::this_thread::get_id() };
+	profiler::ProfileResult const result{ "Threaded", 0, 100};
 	p.WriteProfile(result, true);
 
 	p.EndSession();
@@ -124,7 +124,7 @@ TEST_F(GoogleProfilerTest, MultiThreadedWritesAreSafe)
 	{
 		for (uint32_t i{ 0 }; i < NUM_MULTITHREAD_WRITES; ++i)
 		{
-			profiler::ProfileResult const result{ name, 0, 100, std::this_thread::get_id() };
+			profiler::ProfileResult const result{ name, 0, 100};
 			p.WriteProfile(result, true);
 		}
 	} };
@@ -146,12 +146,12 @@ TEST_F(GoogleProfilerTest, DifferentThreadsProduceDifferentTids)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	profiler::ProfileResult const mainResult{ "MainEntry", 0, 100, std::this_thread::get_id() };
+	profiler::ProfileResult const mainResult{ "MainEntry", 0, 100};
 	p.WriteProfile(mainResult, true);
 
 	std::thread worker([&]()
 	{
-		profiler::ProfileResult const workerResult{ "WorkerEntry", 0, 100, std::this_thread::get_id() };
+		profiler::ProfileResult const workerResult{ "WorkerEntry", 0, 100};
 		p.WriteProfile(workerResult, true);
 	});
 	worker.join();
@@ -183,7 +183,7 @@ TEST_F(GoogleProfilerTest, NoEmptyEventInOutput)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	profiler::ProfileResult const result{ "Entry", 0, 100, std::this_thread::get_id() };
+	profiler::ProfileResult const result{ "Entry", 0, 100};
 	p.WriteProfile(result, true);
 
 	p.EndSession();
@@ -198,7 +198,7 @@ TEST_F(GoogleProfilerTest, FlushToStringReturnsValidJson)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	profiler::ProfileResult const result{ "Flushed", 0, 500, std::this_thread::get_id() };
+	profiler::ProfileResult const result{ "Flushed", 0, 500};
 	p.WriteProfile(result, true);
 
 	auto const json{ p.FlushToString() };
@@ -221,7 +221,7 @@ TEST_F(GoogleProfilerTest, FlushToStringIsReadOnly)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	profiler::ProfileResult const result{ "Entry", 0, 100, std::this_thread::get_id() };
+	profiler::ProfileResult const result{ "Entry", 0, 100};
 	p.WriteProfile(result, true);
 
 	auto const json1{ p.FlushToString() };
@@ -239,14 +239,14 @@ TEST_F(GoogleProfilerTest, FlushToStringMidSessionReturnsSnapshot)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	profiler::ProfileResult const r1{ "First", 0, 100, std::this_thread::get_id() };
+	profiler::ProfileResult const r1{ "First", 0, 100};
 	p.WriteProfile(r1, true);
 
 	auto const snapshot{ p.FlushToString() };
 	EXPECT_NE(snapshot.find("\"First\""), std::string::npos);
 
 	// Write more data after snapshot
-	profiler::ProfileResult const r2{ "Second", 100, 200, std::this_thread::get_id() };
+	profiler::ProfileResult const r2{ "Second", 100, 200};
 	p.WriteProfile(r2, true);
 
 	auto const full{ p.FlushToString() };
@@ -261,7 +261,7 @@ TEST_F(GoogleProfilerTest, BeginSessionWithoutFileDoesNotCreateFile)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test");
 
-	profiler::ProfileResult const result{ "NoFile", 0, 100, std::this_thread::get_id() };
+	profiler::ProfileResult const result{ "NoFile", 0, 100};
 	p.WriteProfile(result, true);
 
 	auto const json{ p.FlushToString() };
@@ -278,7 +278,7 @@ TEST_F(GoogleProfilerTest, EndSessionWritesFileAfterFlushToString)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	profiler::ProfileResult const result{ "Both", 0, 100, std::this_thread::get_id() };
+	profiler::ProfileResult const result{ "Both", 0, 100};
 	p.WriteProfile(result, true);
 
 	auto const json{ p.FlushToString() };

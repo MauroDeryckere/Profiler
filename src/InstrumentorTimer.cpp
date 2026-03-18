@@ -1,8 +1,6 @@
 #include "Profiler/InstrumentorTimer.h"
 #include "Profiler/ServiceLocator.h"
 
-#include <thread>
-
 namespace profiler
 {
 	InstrumentorTimer::InstrumentorTimer(std::string_view timerName, bool isFunction) :
@@ -27,6 +25,6 @@ namespace profiler
 
 		m_IsStopped = true;
 
-		PROFILER.WriteProfile({ m_Name, start, end, std::this_thread::get_id() }, m_IsFunction);
+		PROFILER.WriteProfile({ m_Name, start, end }, m_IsFunction);
 	}
 }
