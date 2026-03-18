@@ -63,7 +63,7 @@ if(PROFILER_USE_OPTICK)
 		include(FetchContent)
 		FetchContent_Declare(
 			Optick
-			GIT_REPOSITORY https://github.com/bombomby/optick.git
+			GIT_REPOSITORY https://github.com/MauroDeryckere/optick.git
 			GIT_TAG master
 		)
 		# Disable Optick's own samples/tests
