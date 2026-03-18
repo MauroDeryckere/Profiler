@@ -1,6 +1,7 @@
 #include "GoogleProfiler.h"
 
 #include <atomic>
+#include <chrono>
 #include <cinttypes>
 #include <cstdio>
 #include <fstream>
@@ -41,13 +42,8 @@ namespace profiler
 		m_Active = true;
 	}
 
-	void GoogleProfiler::WriteProfile(ProfileResult const& result, bool isFunction)
+	void GoogleProfiler::EnsureThreadBuffer()
 	{
-		if (!m_Active)
-		{
-			return;
-		}
-
 		if (s_Cache.sessionId != m_SessionId)
 		{
 			std::lock_guard lock(m_Mutex);
@@ -60,8 +56,41 @@ namespace profiler
 			s_Cache.sessionId = m_SessionId;
 			m_ThreadBuffers.emplace_back(std::move(tb));
 		}
+	}
 
+	void GoogleProfiler::WriteProfile(ProfileResult const& result, bool isFunction)
+	{
+		if (!m_Active)
+		{
+			return;
+		}
+
+		EnsureThreadBuffer();
 		s_Cache.buffer->events.emplace_back(result.name, result.start, result.end - result.start, isFunction);
+	}
+
+	void GoogleProfiler::SetThreadName(std::string_view name)
+	{
+		if (!m_Active)
+		{
+			return;
+		}
+
+		EnsureThreadBuffer();
+		s_Cache.buffer->threadName = name;
+	}
+
+	void GoogleProfiler::MarkFrame(std::string_view name)
+	{
+		if (!m_Active)
+		{
+			return;
+		}
+
+		auto const now{ std::chrono::time_point_cast<std::chrono::microseconds>(
+			std::chrono::high_resolution_clock::now()).time_since_epoch().count() };
+
+		WriteProfile({ name, now, now }, false);
 	}
 
 	std::string GoogleProfiler::BuildJson() const
@@ -85,8 +114,16 @@ namespace profiler
 
 			json += R"({"name":"thread_name","ph":"M","pid":0,"tid":)";
 			json += tidStr;
-			json += R"(,"args":{"name":"Thread )";
-			json += tidStr;
+			json += R"(,"args":{"name":")";
+			if (tb->threadName.empty())
+			{
+				json += "Thread ";
+				json += tidStr;
+			}
+			else
+			{
+				json += tb->threadName;
+			}
 			json += R"("}})";
 
 			// Trace events

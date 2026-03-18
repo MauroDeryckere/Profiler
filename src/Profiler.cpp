@@ -15,6 +15,9 @@ namespace profiler
 		m_FlushCallback = std::move(callback);
 	}
 
+	void Profiler::SetThreadName(std::string_view /*name*/) {}
+	void Profiler::MarkFrame(std::string_view /*name*/) {}
+
 	void Profiler::Tick()
 	{
 		if (m_MaxFrames == 0)

@@ -23,6 +23,7 @@ namespace profiler
 	struct ThreadBuffer final
 	{
 		std::vector<TraceEvent> events;
+		std::string threadName;
 		uint32_t tid{ 0 };
 	};
 
@@ -42,6 +43,12 @@ namespace profiler
 		/** @see Profiler::WriteProfile */
 		void WriteProfile(ProfileResult const& result, bool isFunction) override;
 
+		/** @see Profiler::SetThreadName */
+		void SetThreadName(std::string_view name) override;
+
+		/** @see Profiler::MarkFrame */
+		void MarkFrame(std::string_view name) override;
+
 		/** @see Profiler::EndSession */
 		void EndSession() override;
 
@@ -54,6 +61,7 @@ namespace profiler
 		GoogleProfiler& operator=(GoogleProfiler&&) = delete;
 
 	private:
+		void EnsureThreadBuffer();
 		[[nodiscard]] std::string BuildJson() const;
 
 		mutable std::mutex m_Mutex;

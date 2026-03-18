@@ -53,6 +53,19 @@ namespace profiler
 		virtual void WriteProfile(ProfileResult const& result, bool isFunction) = 0;
 
 		/**
+		 * Names the calling thread in the trace output.
+		 * Must be called from the thread you want to name.
+		 * @param name	Display name for the thread.
+		 */
+		virtual void SetThreadName(std::string_view name);
+
+		/**
+		 * Marks a frame boundary in the trace output.
+		 * @param name	Frame category name (e.g. "MainThread", "Render").
+		 */
+		virtual void MarkFrame(std::string_view name);
+
+		/**
 		 * Advances the frame counter. When the configured frame count is reached,
 		 * fires the flush callback (if set) then calls EndSession().
 		 * No-op if the session has no frame limit (maxFrames was 0 in BeginSession).

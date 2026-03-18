@@ -40,8 +40,8 @@
 
 		#define PROFILER_FUNCTION()   ::profiler::InstrumentorTimer PROFILER_CONCAT(profTimer_, __LINE__){PROFILER_FUNC_SIG, true}
 		#define PROFILER_SCOPE(name)  ::profiler::InstrumentorTimer PROFILER_CONCAT(profTimer_, __LINE__){name, false}
-		#define PROFILER_THREAD(name)
-		#define PROFILER_FRAME(name)
+		#define PROFILER_THREAD(name) PROFILER.SetThreadName(name)
+		#define PROFILER_FRAME(name)  PROFILER.MarkFrame(name)
 	#endif
 
 	#define PROFILER_BEGIN_SESSION(name, ...)	 PROFILER.BeginSession(name, ##__VA_ARGS__)
