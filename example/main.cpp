@@ -64,10 +64,14 @@ void RunMultiThreadedDemo()
 {
 	PROFILER_SCOPE("MultiThreaded");
 
-	std::vector<std::jthread> workers;
+	std::vector<std::thread> workers;
 	for (uint32_t i{ 0 }; i < 4; ++i)
 	{
 		workers.emplace_back(WorkerTask, i);
+	}
+	for (auto& w : workers)
+	{
+		w.join();
 	}
 }
 

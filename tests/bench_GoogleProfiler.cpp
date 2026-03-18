@@ -10,7 +10,8 @@
 #include <filesystem>
 #include <functional>
 #include <numeric>
-#include <print>
+#include <cstdio>
+#include <format>
 #include <string>
 #include <thread>
 #include <vector>
@@ -45,7 +46,7 @@ namespace
 		double const min{ samples.front() };
 		double const max{ samples.back() };
 
-		std::println("[{} samples, discarded min={:.1f} us / max={:.1f} us, averaged {}]", SAMPLE_COUNT, min, max, SAMPLE_COUNT - 2);
+		printf("%s\n", std::format("[{} samples, discarded min={:.1f} us / max={:.1f} us, averaged {}]", SAMPLE_COUNT, min, max, SAMPLE_COUNT - 2).c_str());
 
 		return mean;
 	}
@@ -88,7 +89,7 @@ TEST_F(ProfilerBench, WriteProfileThroughput)
 		return ElapsedUs(start, end);
 	}) };
 
-	std::println("WriteProfile: {} calls, avg {:.1f} ms ({:.0f} ns/call)", ITERATIONS, avgUs / 1000.0, (avgUs * 1000.0) / ITERATIONS);
+	printf("%s\n", std::format("WriteProfile: {} calls, avg {:.1f} ms ({:.0f} ns/call)", ITERATIONS, avgUs / 1000.0, (avgUs * 1000.0) / ITERATIONS).c_str());
 }
 
 TEST_F(ProfilerBench, WriteProfileMultiThreaded)
@@ -128,7 +129,7 @@ TEST_F(ProfilerBench, WriteProfileMultiThreaded)
 		return ElapsedUs(start, end);
 	}) };
 
-	std::println("WriteProfile ({} threads): {} calls, avg {:.1f} ms ({:.0f} ns/call)", THREADS, totalCalls, avgUs / 1000.0, (avgUs * 1000.0) / totalCalls);
+	printf("%s\n", std::format("WriteProfile ({} threads): {} calls, avg {:.1f} ms ({:.0f} ns/call)", THREADS, totalCalls, avgUs / 1000.0, (avgUs * 1000.0) / totalCalls).c_str());
 }
 
 TEST_F(ProfilerBench, SessionLifecycle)
@@ -150,7 +151,7 @@ TEST_F(ProfilerBench, SessionLifecycle)
 		return ElapsedUs(start, end);
 	}) };
 
-	std::println("Begin+Write+End+File: {} cycles, avg {:.1f} ms ({:.0f} us/cycle)", ITERATIONS, avgUs / 1000.0, avgUs / ITERATIONS);
+	printf("%s\n", std::format("Begin+Write+End+File: {} cycles, avg {:.1f} ms ({:.0f} us/cycle)", ITERATIONS, avgUs / 1000.0, avgUs / ITERATIONS).c_str());
 }
 
 TEST_F(ProfilerBench, FlushToStringCost)
@@ -181,7 +182,7 @@ TEST_F(ProfilerBench, FlushToStringCost)
 		return ElapsedUs(start, end);
 	}) };
 
-	std::println("FlushToString (10k events): {} calls, avg {:.1f} ms ({:.2f} ms/call)", FLUSH_ITERATIONS, avgUs / 1000.0, avgUs / 1000.0 / FLUSH_ITERATIONS);
+	printf("%s\n", std::format("FlushToString (10k events): {} calls, avg {:.1f} ms ({:.2f} ms/call)", FLUSH_ITERATIONS, avgUs / 1000.0, avgUs / 1000.0 / FLUSH_ITERATIONS).c_str());
 }
 
 TEST_F(ProfilerBench, InstrumentorTimerOverhead)
@@ -204,5 +205,5 @@ TEST_F(ProfilerBench, InstrumentorTimerOverhead)
 		return ElapsedUs(start, end);
 	}) };
 
-	std::println("InstrumentorTimer RAII: {} cycles, avg {:.1f} ms ({:.0f} ns/cycle)", ITERATIONS, avgUs / 1000.0, (avgUs * 1000.0) / ITERATIONS);
+	printf("%s\n", std::format("InstrumentorTimer RAII: {} cycles, avg {:.1f} ms ({:.0f} ns/cycle)", ITERATIONS, avgUs / 1000.0, (avgUs * 1000.0) / ITERATIONS).c_str());
 }
