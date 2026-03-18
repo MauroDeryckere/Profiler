@@ -357,7 +357,8 @@ TEST_F(GoogleProfilerTest, MarkFrameProducesEvent)
 
 	auto const content{ ReadFileContents(TEST_DIR + "/output.json") };
 	EXPECT_NE(content.find("\"MainThread\""), std::string::npos);
-	EXPECT_NE(content.find("\"dur\":0"), std::string::npos);
+	EXPECT_NE(content.find("\"ph\":\"i\""), std::string::npos);
+	EXPECT_NE(content.find("\"s\":\"t\""), std::string::npos);
 }
 
 TEST_F(GoogleProfilerTest, SetThreadNameWithoutSessionIsSafe)
