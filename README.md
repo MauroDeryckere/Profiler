@@ -7,7 +7,7 @@ A lightweight, cross-platform C++20 profiling library with Chrome DevTools and O
 - **Zero overhead when disabled** - all macros compile to nothing
 - **Chrome DevTools integration** - output JSON viewable in `chrome://tracing` or [Perfetto](https://ui.perfetto.dev)
 - **Optick support** — optional backend for the [Optick](https://github.com/bombomby/optick) profiler
-- **Thread-safe** — lock-free per-thread binary event buffers with minimal contention
+- **Thread-safe** — lock-free per-thread binary event buffers with minimal contention (see [Threading Model](#threading-model))
 - **RAII-based** — automatic scope timing via `PROFILER_SCOPE` and `PROFILER_FUNCTION`
 - **Cross-platform** — Windows, Linux, macOS, Android (NDK), iOS
 - **Easy CMake integration** — `add_subdirectory`, `FetchContent`, or `find_package`
@@ -133,6 +133,27 @@ The backend is selected at compile time (`PROFILER_USE_OPTICK` flag). `GetProfil
 type (`GoogleProfiler&` or `OptickProfiler&`), enabling the compiler to devirtualize all calls. To disable
 profiling at runtime, simply call `EndSession()` or don't call `BeginSession()` — `WriteProfile` is a no-op
 when no session is active.
+
+## Threading Model
+
+`PROFILER_SCOPE`, `PROFILER_FUNCTION`, and `WriteProfile` are safe to call concurrently from any number
+of threads — each thread writes to its own lock-free buffer with no contention.
+
+**Session lifecycle functions (`BeginSession`, `EndSession`, `Tick`) are not thread-safe.** They must be
+called from a single thread (typically the main thread), and no other thread may be calling `WriteProfile`
+at the same time. In practice this means:
+
+```cpp
+PROFILER_BEGIN_SESSION("Game", "profiling/game");   // main thread, before spawning workers
+
+// ... workers run, call PROFILER_SCOPE / PROFILER_FUNCTION freely ...
+
+// join all worker threads first, then:
+PROFILER_END_SESSION();                             // main thread, after joining workers
+```
+
+Calling `BeginSession` or `EndSession` while worker threads are actively writing profile events is
+undefined behavior.
 
 ## Building & Testing
 
