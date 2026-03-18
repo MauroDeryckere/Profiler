@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -47,6 +48,7 @@ void ProcessData()
 // ---------------------------------------------------------------------------
 void WorkerTask(int id)
 {
+	PROFILER_THREAD(("Worker " + std::to_string(id)).c_str());
 	PROFILER_FUNCTION();
 
 	for (uint32_t i{ 0 }; i < 3; ++i)
@@ -62,6 +64,7 @@ void WorkerTask(int id)
 
 void RunMultiThreadedDemo()
 {
+	PROFILER_THREAD("Main");
 	PROFILER_SCOPE("MultiThreaded");
 
 	std::vector<std::thread> workers;
@@ -103,6 +106,7 @@ void RunFrameBasedDemo()
 
 	for (uint32_t frame{ 0 }; frame < 10; ++frame)
 	{
+		PROFILER_FRAME("MainThread");
 		SimulateFrame(frame);
 		PROFILER_TICK(); // auto-ends after 5 frames
 	}

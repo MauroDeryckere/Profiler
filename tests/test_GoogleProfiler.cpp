@@ -290,3 +290,84 @@ TEST_F(GoogleProfilerTest, EndSessionWritesFileAfterFlushToString)
 	auto const content{ ReadFileContents(TEST_DIR + "/output.json") };
 	EXPECT_NE(content.find("\"Both\""), std::string::npos);
 }
+
+TEST_F(GoogleProfilerTest, SetThreadNameAppearsInOutput)
+{
+	profiler::GoogleProfiler p;
+	p.BeginSession("test", (TEST_DIR + "/output").c_str());
+
+	p.SetThreadName("MainThread");
+	profiler::ProfileResult const result{ "Entry", 0, 100};
+	p.WriteProfile(result, true);
+
+	p.EndSession();
+
+	auto const content{ ReadFileContents(TEST_DIR + "/output.json") };
+	EXPECT_NE(content.find("\"MainThread\""), std::string::npos);
+	// Should NOT contain the default "Thread 1" name
+	EXPECT_EQ(content.find("\"Thread 1\""), std::string::npos);
+}
+
+TEST_F(GoogleProfilerTest, DefaultThreadNameUsedWhenNotSet)
+{
+	profiler::GoogleProfiler p;
+	p.BeginSession("test", (TEST_DIR + "/output").c_str());
+
+	profiler::ProfileResult const result{ "Entry", 0, 100};
+	p.WriteProfile(result, true);
+
+	p.EndSession();
+
+	auto const content{ ReadFileContents(TEST_DIR + "/output.json") };
+	EXPECT_NE(content.find("\"Thread 1\""), std::string::npos);
+}
+
+TEST_F(GoogleProfilerTest, SetThreadNamePerThread)
+{
+	profiler::GoogleProfiler p;
+	p.BeginSession("test", (TEST_DIR + "/output").c_str());
+
+	p.SetThreadName("Main");
+	profiler::ProfileResult const result{ "MainEntry", 0, 100};
+	p.WriteProfile(result, true);
+
+	std::thread worker([&]()
+	{
+		p.SetThreadName("Worker");
+		profiler::ProfileResult const workerResult{ "WorkerEntry", 0, 100};
+		p.WriteProfile(workerResult, true);
+	});
+	worker.join();
+
+	p.EndSession();
+
+	auto const content{ ReadFileContents(TEST_DIR + "/output.json") };
+	EXPECT_NE(content.find("\"Main\""), std::string::npos);
+	EXPECT_NE(content.find("\"Worker\""), std::string::npos);
+}
+
+TEST_F(GoogleProfilerTest, MarkFrameProducesEvent)
+{
+	profiler::GoogleProfiler p;
+	p.BeginSession("test", (TEST_DIR + "/output").c_str());
+
+	p.MarkFrame("MainThread");
+
+	p.EndSession();
+
+	auto const content{ ReadFileContents(TEST_DIR + "/output.json") };
+	EXPECT_NE(content.find("\"MainThread\""), std::string::npos);
+	EXPECT_NE(content.find("\"dur\":0"), std::string::npos);
+}
+
+TEST_F(GoogleProfilerTest, SetThreadNameWithoutSessionIsSafe)
+{
+	profiler::GoogleProfiler p;
+	p.SetThreadName("Orphan");
+}
+
+TEST_F(GoogleProfilerTest, MarkFrameWithoutSessionIsSafe)
+{
+	profiler::GoogleProfiler p;
+	p.MarkFrame("Orphan");
+}
