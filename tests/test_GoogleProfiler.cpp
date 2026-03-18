@@ -373,3 +373,47 @@ TEST_F(GoogleProfilerTest, MarkFrameWithoutSessionIsSafe)
 	profiler::GoogleProfiler p;
 	p.MarkFrame("Orphan");
 }
+
+TEST_F(GoogleProfilerTest, BeginSessionWhileActiveEndsFirst)
+{
+	profiler::GoogleProfiler p;
+	p.BeginSession("first", (TEST_DIR + "/first").c_str());
+
+	profiler::ProfileResult const r1{ "FirstEntry", 0, 100 };
+	p.WriteProfile(r1, true);
+
+	p.BeginSession("second", (TEST_DIR + "/second").c_str());
+
+	// First session should have been ended and written
+	EXPECT_TRUE(std::filesystem::exists(TEST_DIR + "/first.json"));
+	auto const content{ ReadFileContents(TEST_DIR + "/first.json") };
+	EXPECT_NE(content.find("\"FirstEntry\""), std::string::npos);
+
+	p.EndSession();
+	EXPECT_TRUE(std::filesystem::exists(TEST_DIR + "/second.json"));
+}
+
+TEST_F(GoogleProfilerTest, FlushToStringContainsMultiThreadData)
+{
+	profiler::GoogleProfiler p;
+	p.BeginSession("test");
+
+	std::thread t1([&]()
+	{
+		profiler::ProfileResult const result{ "ThreadA", 0, 100 };
+		p.WriteProfile(result, true);
+	});
+	std::thread t2([&]()
+	{
+		profiler::ProfileResult const result{ "ThreadB", 0, 100 };
+		p.WriteProfile(result, true);
+	});
+	t1.join();
+	t2.join();
+
+	auto const json{ p.FlushToString() };
+	EXPECT_NE(json.find("\"ThreadA\""), std::string::npos);
+	EXPECT_NE(json.find("\"ThreadB\""), std::string::npos);
+
+	p.EndSession();
+}
