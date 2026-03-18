@@ -43,8 +43,8 @@ namespace profiler
 		GoogleProfiler() = default;
 		~GoogleProfiler() noexcept;
 
-		void BeginSession(std::string const& name, std::string_view filepath = {}, uint32_t maxFrames = 0, FlushCallback callback = nullptr) noexcept;
-		void EndSession() noexcept;
+		void BeginSession(std::string const& name, std::string_view filepath = {}, uint32_t maxFrames = 0, FlushCallback callback = nullptr);
+		void EndSession();
 		void SetThreadName(std::string_view name) noexcept;
 		void MarkFrame(std::string_view name) noexcept;
 		[[nodiscard]] std::string FlushToString() const;

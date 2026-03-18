@@ -11,10 +11,10 @@ namespace profiler
 
 	GoogleProfiler::~GoogleProfiler() noexcept
 	{
-		EndSession();
+		try { EndSession(); } catch (...) {}
 	}
 
-	void GoogleProfiler::BeginSession(std::string const& name, std::string_view filepath, uint32_t maxFrames, FlushCallback callback) noexcept
+	void GoogleProfiler::BeginSession(std::string const& name, std::string_view filepath, uint32_t maxFrames, FlushCallback callback)
 	{
 		Profiler<GoogleProfiler>::BeginSession(name, filepath, maxFrames, std::move(callback));
 		m_ThreadBuffers.clear();
@@ -110,7 +110,7 @@ namespace profiler
 		return json;
 	}
 
-	void GoogleProfiler::EndSession() noexcept
+	void GoogleProfiler::EndSession()
 	{
 		if (m_Active)
 		{
