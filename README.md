@@ -204,19 +204,19 @@ Measured on Windows 11, MSVC 19.x, Release build (`/O2`), AMD Ryzen 7 5800H.
 
 | Benchmark | Calls | Avg time | Per-call |
 |---|---|---|---|
-| WriteProfile (single thread) | 100,000 | 5.1 ms | **51 ns/call** |
-| WriteProfile (4 threads) | 100,000 | 3.8 ms | **38 ns/call** |
-| InstrumentorTimer RAII | 50,000 | 6.3 ms | **127 ns/cycle** |
-| FlushToString (10k events) | 100 | 273.3 ms | **2.73 ms/call** |
-| Session lifecycle (with file I/O) | 1,000 | 1,645.7 ms | **1,646 us/cycle** |
+| WriteProfile (single thread) | 100,000 | 2.9 ms | **29 ns/call** |
+| WriteProfile (4 threads) | 100,000 | 3.0 ms | **30 ns/call** |
+| InstrumentorTimer RAII | 50,000 | 5.8 ms | **116 ns/cycle** |
+| FlushToString (10k events) | 100 | 280.4 ms | **2.80 ms/call** |
+| Session lifecycle (with file I/O) | 1,000 | 1,640.8 ms | **1,641 us/cycle** |
 
 ### How to read these numbers
 
-- **InstrumentorTimer at ~127 ns/cycle** is the real-world cost of `PROFILER_SCOPE()`. On a 60fps
-  frame (~16.6 ms), profiling 100 scopes costs ~0.013 ms, or about **0.08% of your frame budget**.
-- **Multi-threaded scaling** shows near-linear improvement (38 ns/call with 4 threads vs 51 ns
+- **InstrumentorTimer at ~116 ns/cycle** is the real-world cost of `PROFILER_SCOPE()`. On a 60fps
+  frame (~16.6 ms), profiling 100 scopes costs ~0.012 ms, or about **0.07% of your frame budget**.
+- **Multi-threaded scaling** shows near-linear improvement (30 ns/call with 4 threads vs 29 ns
   single-threaded) because each thread writes to its own lock-free buffer.
-- **Session lifecycle** is dominated by filesystem I/O (~1.9 ms per cycle). This only happens when
+- **Session lifecycle** is dominated by filesystem I/O (~1.6 ms per cycle). This only happens when
   you call `BeginSession`/`EndSession`, not during normal profiling.
 - **FlushToString** converts binary event buffers to JSON on demand. The cost scales with the number
   of buffered events and only runs when you explicitly flush or end a session.

@@ -26,7 +26,7 @@ namespace profiler
 			, m_IsFunction{ isFunction } { }
 
 		/** Stops the timer if not already stopped and emits the complete profile event. */
-		~InstrumentorTimer();
+		~InstrumentorTimer() noexcept;
 
 		/** Manually stops the timer early and emits the complete profile event. Safe to call multiple times. */
 		void Stop() noexcept;

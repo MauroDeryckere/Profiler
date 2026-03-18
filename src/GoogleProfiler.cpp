@@ -1,6 +1,5 @@
 #include "Profiler/GoogleProfiler.h"
 
-#include <atomic>
 #include <cinttypes>
 #include <cstdio>
 #include <fstream>
@@ -8,68 +7,37 @@
 
 namespace profiler
 {
-	namespace
-	{
-		uint32_t constexpr INITIAL_EVENT_CAPACITY{ 4096 };
+	thread_local GoogleProfiler::ThreadCache GoogleProfiler::s_Cache;
 
-		uint32_t nextSessionId()
-		{
-			static std::atomic<uint32_t> counter{ 0 };
-			return ++counter;
-		}
-
-		struct ThreadCache final
-		{
-			ThreadBuffer* buffer{ nullptr };
-			uint32_t sessionId{ 0 };
-		};
-
-		thread_local ThreadCache s_Cache;
-	}
-
-	GoogleProfiler::~GoogleProfiler()
+	GoogleProfiler::~GoogleProfiler() noexcept
 	{
 		EndSession();
 	}
 
-	void GoogleProfiler::BeginSession(std::string const& name, std::string_view filepath, uint32_t maxFrames, FlushCallback callback)
+	void GoogleProfiler::BeginSession(std::string const& name, std::string_view filepath, uint32_t maxFrames, FlushCallback callback) noexcept
 	{
 		Profiler<GoogleProfiler>::BeginSession(name, filepath, maxFrames, std::move(callback));
 		m_ThreadBuffers.clear();
 		m_NextThreadId = 1;
-		m_SessionId = nextSessionId();
+		static std::atomic<uint32_t> counter{ 0 };
+		m_SessionId = ++counter;
 		m_Active = true;
 	}
 
-	void GoogleProfiler::EnsureThreadBuffer()
+	void GoogleProfiler::RegisterThread() noexcept
 	{
-		if (s_Cache.sessionId != m_SessionId) [[unlikely]]
-		{
-			std::lock_guard lock(m_Mutex);
+		std::lock_guard lock(m_Mutex);
 
-			auto tb{ std::make_unique<ThreadBuffer>() };
-			tb->events.reserve(INITIAL_EVENT_CAPACITY);
-			tb->tid = m_NextThreadId++;
+		auto tb{ std::make_unique<detail::ThreadBuffer>() };
+		tb->events.reserve(INITIAL_EVENT_CAPACITY);
+		tb->tid = m_NextThreadId++;
 
-			s_Cache.buffer = tb.get();
-			s_Cache.sessionId = m_SessionId;
-			m_ThreadBuffers.emplace_back(std::move(tb));
-		}
+		s_Cache.buffer = tb.get();
+		s_Cache.sessionId = m_SessionId;
+		m_ThreadBuffers.emplace_back(std::move(tb));
 	}
 
-	void GoogleProfiler::WriteProfile(ProfileResult const& result, bool isFunction)
-	{
-		if (!m_Active) [[unlikely]]
-		{
-			return;
-		}
-
-		EnsureThreadBuffer();
-		s_Cache.buffer->events.emplace_back(result.name, result.start, result.end - result.start,
-			isFunction ? TraceEventType::Function : TraceEventType::Scope);
-	}
-
-	void GoogleProfiler::SetThreadName(std::string_view name)
+	void GoogleProfiler::SetThreadName(std::string_view name) noexcept
 	{
 		if (!m_Active) [[unlikely]]
 		{
@@ -80,7 +48,7 @@ namespace profiler
 		s_Cache.buffer->threadName = name;
 	}
 
-	void GoogleProfiler::MarkFrame(std::string_view name)
+	void GoogleProfiler::MarkFrame(std::string_view name) noexcept
 	{
 		SetThreadName(name);
 	}
@@ -123,7 +91,7 @@ namespace profiler
 			for (auto const& e : tb->events)
 			{
 				json += R"(,{"cat":")";
-				json += e.type == TraceEventType::Function ? "function" : "scope";
+				json += e.type == detail::TraceEventType::Function ? "function" : "scope";
 				json += R"(","name":")";
 				json += e.name;
 				json += R"(","ph":"X","pid":0,"tid":)";
@@ -142,7 +110,7 @@ namespace profiler
 		return json;
 	}
 
-	void GoogleProfiler::EndSession()
+	void GoogleProfiler::EndSession() noexcept
 	{
 		if (m_Active)
 		{

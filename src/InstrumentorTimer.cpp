@@ -3,7 +3,7 @@
 
 namespace profiler
 {
-	InstrumentorTimer::~InstrumentorTimer()
+	InstrumentorTimer::~InstrumentorTimer() noexcept
 	{
 		if (!m_IsStopped)
 		{

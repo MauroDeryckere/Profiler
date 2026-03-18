@@ -38,7 +38,7 @@ namespace profiler
 	public:
 		using FlushCallback = std::function<void(std::string const&)>;
 
-		void BeginSession(std::string const& /*name*/, std::string_view filepath = {}, uint32_t maxFrames = 0, FlushCallback callback = nullptr)
+		void BeginSession(std::string const& /*name*/, std::string_view filepath = {}, uint32_t maxFrames = 0, FlushCallback callback = nullptr) noexcept
 		{
 			self().EndSession();
 			m_FileName = filepath;
@@ -47,10 +47,10 @@ namespace profiler
 			m_FlushCallback = std::move(callback);
 		}
 
-		void SetThreadName(std::string_view /*name*/) {}
-		void MarkFrame(std::string_view /*name*/) {}
+		void SetThreadName(std::string_view /*name*/) noexcept {}
+		void MarkFrame(std::string_view /*name*/) noexcept {}
 
-		void Tick()
+		void Tick() noexcept
 		{
 			if (m_MaxFrames == 0)
 			{
