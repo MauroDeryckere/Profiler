@@ -56,19 +56,23 @@ namespace profiler
 
 	std::string GoogleProfiler::BuildJson() const
 	{
+		size_t totalEvents{ 0 };
+		for (auto const& tb : m_ThreadBuffers)
+			totalEvents += tb->events.size();
+
 		std::string json;
+		json.reserve(totalEvents * 128 + 256);
 		json += R"({"otherData":{},"traceEvents":[)";
 
 		bool first{ true };
-		char tidBuf[16];
 		char buf[64];
 
 		for (auto const& tb : m_ThreadBuffers)
 		{
 			if (tb->events.empty()) continue;
 
-			auto const tidLen{ snprintf(tidBuf, sizeof(tidBuf), "%u", tb->tid) };
-			std::string_view const tidStr{ tidBuf, static_cast<size_t>(tidLen) };
+			auto [tidEnd, _]{ std::to_chars(buf, buf + sizeof(buf), tb->tid) };
+			std::string_view const tidStr{ buf, tidEnd };
 
 			// Thread metadata event
 			if (!first) json += ',';
@@ -98,11 +102,11 @@ namespace profiler
 				json += R"(","ph":"X","pid":0,"tid":)";
 				json += tidStr;
 				json += R"(,"ts":)";
-				auto len{ snprintf(buf, sizeof(buf), "%" PRId64, e.start) };
-				json.append(buf, static_cast<size_t>(len));
+				auto [tsEnd, ec1]{ std::to_chars(buf, buf + sizeof(buf), e.start) };
+				json.append(buf, tsEnd);
 				json += R"(,"dur":)";
-				len = snprintf(buf, sizeof(buf), "%" PRId64, e.duration);
-				json.append(buf, static_cast<size_t>(len));
+				auto [durEnd, ec2]{ std::to_chars(buf, buf + sizeof(buf), e.duration) };
+				json.append(buf, durEnd);
 				json += '}';
 			}
 		}
