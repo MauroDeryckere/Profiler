@@ -12,7 +12,7 @@ namespace profiler
 		OPTICK_START_CAPTURE()
 	}
 
-	void OptickProfiler::WriteProfile(ProfileResult const& result, bool isFunction)
+	void OptickProfiler::WriteProfile([[maybe_unused]] ProfileResult const& result, [[maybe_unused]] bool isFunction)
 	{
 		assert(false && "OptickProfiler uses OPTICK_EVENT macros — do not call WriteProfile directly");
 	}
