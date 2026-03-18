@@ -19,7 +19,11 @@ namespace profiler
 		 * @param timerName		Name shown in the trace viewer.
 		 * @param isFunction	True if profiling a function, false for a named scope.
 		 */
-		explicit InstrumentorTimer(std::string_view timerName, bool isFunction);
+		explicit InstrumentorTimer(std::string_view timerName, bool isFunction) noexcept
+			: m_Name{ timerName }
+			, m_StartPoint{ std::chrono::high_resolution_clock::now() }
+			, m_IsStopped{ false }
+			, m_IsFunction{ isFunction } { }
 
 		/** Stops the timer if not already stopped and emits the complete profile event. */
 		~InstrumentorTimer();

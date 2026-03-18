@@ -3,12 +3,6 @@
 
 namespace profiler
 {
-	InstrumentorTimer::InstrumentorTimer(std::string_view timerName, bool isFunction) :
-		m_Name{ timerName },
-		m_StartPoint{ std::chrono::high_resolution_clock::now() },
-		m_IsStopped{ false },
-		m_IsFunction{ isFunction } { }
-
 	InstrumentorTimer::~InstrumentorTimer()
 	{
 		if (!m_IsStopped)
