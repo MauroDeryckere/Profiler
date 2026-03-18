@@ -100,3 +100,44 @@ TEST_F(MacrosTest, NestedScopesProduceMultipleEntries)
 	EXPECT_NE(content.find("\"Outer\""), std::string::npos);
 	EXPECT_NE(content.find("\"Inner\""), std::string::npos);
 }
+
+TEST_F(MacrosTest, ProfilerThreadNamesThread)
+{
+	PROFILER_BEGIN_SESSION("thread", (TEST_DIR + "/thread").c_str());
+
+	PROFILER_THREAD("MainThread");
+	{
+		PROFILER_SCOPE("Entry");
+	}
+
+	PROFILER_END_SESSION();
+
+	auto const content{ ReadFileContents(TEST_DIR + "/thread.json") };
+	EXPECT_NE(content.find("\"MainThread\""), std::string::npos);
+}
+
+TEST_F(MacrosTest, ProfilerFrameNamesThread)
+{
+	PROFILER_BEGIN_SESSION("frame", (TEST_DIR + "/frame").c_str());
+
+	PROFILER_FRAME("GameThread");
+	{
+		PROFILER_SCOPE("Entry");
+	}
+
+	PROFILER_END_SESSION();
+
+	auto const content{ ReadFileContents(TEST_DIR + "/frame.json") };
+	EXPECT_NE(content.find("\"GameThread\""), std::string::npos);
+}
+
+TEST_F(MacrosTest, ProfilerTickAdvancesFrameCounter)
+{
+	PROFILER_BEGIN_SESSION("tick", (TEST_DIR + "/tick").c_str(), 2);
+
+	PROFILER_SCOPE("Frame1");
+	PROFILER_TICK();
+	PROFILER_TICK(); // should auto-end
+
+	EXPECT_TRUE(std::filesystem::exists(TEST_DIR + "/tick.json"));
+}

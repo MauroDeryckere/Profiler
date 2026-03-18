@@ -78,3 +78,10 @@ TEST_F(InstrumentorTimerTest, WritesToActiveProfiler)
 	EXPECT_NE(content.find("\"ActiveWrite\""), std::string::npos);
 	EXPECT_NE(content.find("\"cat\":\"function\""), std::string::npos);
 }
+
+TEST(InstrumentorTimerStandalone, TimerWithoutActiveSessionIsNoOp)
+{
+	// No session active — timer should not crash
+	profiler::InstrumentorTimer timer("Orphan", false);
+	timer.Stop();
+}

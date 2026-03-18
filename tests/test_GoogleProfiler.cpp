@@ -393,6 +393,90 @@ TEST_F(GoogleProfilerTest, BeginSessionWhileActiveEndsFirst)
 	EXPECT_TRUE(std::filesystem::exists(TEST_DIR + "/second.json"));
 }
 
+TEST_F(GoogleProfilerTest, WriteProfileWhenInactiveIsNoOp)
+{
+	profiler::GoogleProfiler p;
+
+	profiler::ProfileResult const result{ "Ghost", 0, 100 };
+	p.WriteProfile(result, true);
+
+	p.BeginSession("test", (TEST_DIR + "/output").c_str());
+	p.EndSession();
+
+	auto const content{ ReadFileContents(TEST_DIR + "/output.json") };
+	EXPECT_EQ(content.find("\"Ghost\""), std::string::npos);
+}
+
+TEST_F(GoogleProfilerTest, DestructorEndsActiveSession)
+{
+	{
+		profiler::GoogleProfiler p;
+		p.BeginSession("test", (TEST_DIR + "/dtor").c_str());
+
+		profiler::ProfileResult const result{ "BeforeDtor", 0, 100 };
+		p.WriteProfile(result, true);
+	} // destructor should call EndSession and write file
+
+	EXPECT_TRUE(std::filesystem::exists(TEST_DIR + "/dtor.json"));
+	auto const content{ ReadFileContents(TEST_DIR + "/dtor.json") };
+	EXPECT_NE(content.find("\"BeforeDtor\""), std::string::npos);
+}
+
+TEST_F(GoogleProfilerTest, FlushToStringAfterEndSessionReturnsEmpty)
+{
+	profiler::GoogleProfiler p;
+	p.BeginSession("test");
+
+	profiler::ProfileResult const result{ "Entry", 0, 100 };
+	p.WriteProfile(result, true);
+
+	p.EndSession();
+
+	auto const json{ p.FlushToString() };
+	EXPECT_TRUE(json.empty());
+}
+
+TEST_F(GoogleProfilerTest, SetThreadNameOverwrite)
+{
+	profiler::GoogleProfiler p;
+	p.BeginSession("test", (TEST_DIR + "/output").c_str());
+
+	p.SetThreadName("OldName");
+	p.SetThreadName("NewName");
+
+	profiler::ProfileResult const result{ "Entry", 0, 100 };
+	p.WriteProfile(result, true);
+
+	p.EndSession();
+
+	auto const content{ ReadFileContents(TEST_DIR + "/output.json") };
+	EXPECT_NE(content.find("\"NewName\""), std::string::npos);
+	EXPECT_EQ(content.find("\"OldName\""), std::string::npos);
+}
+
+TEST_F(GoogleProfilerTest, SessionReuse)
+{
+	profiler::GoogleProfiler p;
+
+	p.BeginSession("first", (TEST_DIR + "/first").c_str());
+	profiler::ProfileResult const r1{ "FirstEntry", 0, 100 };
+	p.WriteProfile(r1, true);
+	p.EndSession();
+
+	p.BeginSession("second", (TEST_DIR + "/second").c_str());
+	profiler::ProfileResult const r2{ "SecondEntry", 0, 100 };
+	p.WriteProfile(r2, true);
+	p.EndSession();
+
+	auto const first{ ReadFileContents(TEST_DIR + "/first.json") };
+	EXPECT_NE(first.find("\"FirstEntry\""), std::string::npos);
+	EXPECT_EQ(first.find("\"SecondEntry\""), std::string::npos);
+
+	auto const second{ ReadFileContents(TEST_DIR + "/second.json") };
+	EXPECT_NE(second.find("\"SecondEntry\""), std::string::npos);
+	EXPECT_EQ(second.find("\"FirstEntry\""), std::string::npos);
+}
+
 TEST_F(GoogleProfilerTest, FlushToStringContainsMultiThreadData)
 {
 	profiler::GoogleProfiler p;
