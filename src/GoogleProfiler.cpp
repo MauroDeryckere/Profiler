@@ -34,7 +34,7 @@ namespace profiler
 
 	void GoogleProfiler::BeginSession(std::string const& name, std::string_view filepath, uint32_t maxFrames, FlushCallback callback)
 	{
-		Profiler::BeginSession(name, filepath, maxFrames, std::move(callback));
+		Profiler<GoogleProfiler>::BeginSession(name, filepath, maxFrames, std::move(callback));
 		m_ThreadBuffers.clear();
 		m_NextThreadId = 1;
 		m_SessionId = nextSessionId();

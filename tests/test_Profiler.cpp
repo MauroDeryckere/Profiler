@@ -29,7 +29,7 @@ namespace
 TEST_F(ProfilerBaseTest, PrepareOutputPathCreatesDirectories)
 {
 	std::string const nested{ TEST_DIR + "/a/b/c/file.json" };
-	profiler::Profiler::PrepareOutputPath(nested.c_str());
+	profiler::PrepareOutputPath(nested.c_str());
 
 	EXPECT_TRUE(std::filesystem::exists(TEST_DIR + "/a/b/c"));
 }
@@ -42,7 +42,7 @@ TEST_F(ProfilerBaseTest, PrepareOutputPathRemovesExistingFile)
 	std::ofstream(filePath) << "dummy";
 	ASSERT_TRUE(std::filesystem::exists(filePath));
 
-	profiler::Profiler::PrepareOutputPath(filePath.c_str());
+	profiler::PrepareOutputPath(filePath.c_str());
 	EXPECT_FALSE(std::filesystem::exists(filePath));
 }
 

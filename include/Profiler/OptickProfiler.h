@@ -10,23 +10,16 @@ namespace profiler
 	 * Requires the Optick library to be available (linked via CMake).
 	 * Uses OPTICK_EVENT / OPTICK_FRAME macros for instrumentation.
 	 */
-	class OptickProfiler final : public Profiler
+	class OptickProfiler final : public Profiler<OptickProfiler>
 	{
 	public:
 		OptickProfiler() = default;
-		~OptickProfiler() override = default;
+		~OptickProfiler() = default;
 
-		/** @see Profiler::BeginSession */
-		void BeginSession(std::string const& name, std::string_view filepath = {}, uint32_t maxFrames = 0, FlushCallback callback = nullptr) override;
-
-		/** @see Profiler::WriteProfile */
-		void WriteProfile(ProfileResult const& result, bool isFunction) override;
-
-		/** @see Profiler::EndSession */
-		void EndSession() override;
-
-		/** @see Profiler::FlushToString */
-		[[nodiscard]] std::string FlushToString() const override { return {}; }
+		void BeginSession(std::string const& name, std::string_view filepath = {}, uint32_t maxFrames = 0, FlushCallback callback = nullptr);
+		void WriteProfile(ProfileResult const& result, bool isFunction);
+		void EndSession();
+		[[nodiscard]] std::string FlushToString() const { return {}; }
 
 		OptickProfiler(OptickProfiler const&) = delete;
 		OptickProfiler(OptickProfiler&&) = delete;

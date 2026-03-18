@@ -6,20 +6,15 @@
 namespace profiler
 {
 	/** No-op profiler backend. Used when profiling is disabled or not yet initialized. */
-	class NullProfiler final : public Profiler
+	class NullProfiler final : public Profiler<NullProfiler>
 	{
 	public:
 		NullProfiler() = default;
-		~NullProfiler() override = default;
+		~NullProfiler() = default;
 
-		/** @see Profiler::WriteProfile */
-		void WriteProfile(ProfileResult const& /*result*/, bool /*isFunction*/) override {}
-
-		/** @see Profiler::EndSession */
-		void EndSession() override {}
-
-		/** @see Profiler::FlushToString */
-		[[nodiscard]] std::string FlushToString() const override { return {}; }
+		void WriteProfile(ProfileResult const& /*result*/, bool /*isFunction*/) {}
+		void EndSession() {}
+		[[nodiscard]] std::string FlushToString() const { return {}; }
 
 		NullProfiler(NullProfiler const&) = delete;
 		NullProfiler(NullProfiler&&) = delete;

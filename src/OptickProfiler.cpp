@@ -8,7 +8,7 @@ namespace profiler
 	void OptickProfiler::BeginSession(std::string const& name, std::string_view filepath, uint32_t maxFrames, FlushCallback callback)
 	{
 		assert(!filepath.empty() && "OptickProfiler requires a file path — use BeginSession(name, filepath)");
-		Profiler::BeginSession(name, filepath, maxFrames, std::move(callback));
+		Profiler<OptickProfiler>::BeginSession(name, filepath, maxFrames, std::move(callback));
 		OPTICK_START_CAPTURE()
 	}
 
