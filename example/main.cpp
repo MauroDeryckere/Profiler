@@ -109,7 +109,7 @@ void RunFrameBasedDemo()
 // ---------------------------------------------------------------------------
 void RunStringOutputDemo()
 {
-	PROFILER.BeginSession("CallbackDemo", nullptr, 3, [](std::string const& json)
+	PROFILER.BeginSession("CallbackDemo", {}, 3, [](std::string const& json)
 	{
 		std::cout << "  -> Callback received " << json.size() << " bytes of JSON\n";
 	});

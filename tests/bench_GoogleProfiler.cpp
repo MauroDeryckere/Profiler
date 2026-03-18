@@ -110,7 +110,7 @@ TEST_F(ProfilerBench, WriteProfileMultiThreaded)
 			threads.emplace_back([&p, t, ITERATIONS_PER_THREAD]()
 			{
 				std::string const name{ std::format("Thread{}", t) };
-				profiler::ProfileResult result{ name.c_str(), 0, 100, std::this_thread::get_id() };
+				profiler::ProfileResult const result{ name, 0, 100, std::this_thread::get_id() };
 				for (uint32_t i{ 0 }; i < ITERATIONS_PER_THREAD; ++i)
 				{
 					p.WriteProfile(result, true);

@@ -17,7 +17,7 @@ namespace profiler
 		~OptickProfiler() override = default;
 
 		/** @see Profiler::BeginSession */
-		void BeginSession(std::string const& name, char const* filepath = nullptr, uint32_t maxFrames = 0, FlushCallback callback = nullptr) override;
+		void BeginSession(std::string const& name, std::string_view filepath = {}, uint32_t maxFrames = 0, FlushCallback callback = nullptr) override;
 
 		/** @see Profiler::WriteProfile */
 		void WriteProfile(ProfileResult const& result, bool isFunction) override;
@@ -26,7 +26,7 @@ namespace profiler
 		void EndSession() override;
 
 		/** @see Profiler::FlushToString */
-		[[nodiscard]] std::string FlushToString() const noexcept override { return {}; }
+		[[nodiscard]] std::string FlushToString() const override { return {}; }
 
 		OptickProfiler(OptickProfiler const&) = delete;
 		OptickProfiler(OptickProfiler&&) = delete;

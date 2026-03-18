@@ -37,6 +37,12 @@ target_include_directories(Profiler
 
 target_compile_features(Profiler PUBLIC cxx_std_20)
 
+# --- Warnings as errors (library only) ---
+target_compile_options(Profiler PRIVATE
+	$<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+	$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
+)
+
 # --- Compile definitions ---
 if(PROFILER_ENABLED)
 	target_compile_definitions(Profiler PUBLIC PROFILER_ENABLED)

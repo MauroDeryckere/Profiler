@@ -5,7 +5,7 @@
 
 namespace profiler
 {
-	InstrumentorTimer::InstrumentorTimer(char const* timerName, bool isFunction) : 
+	InstrumentorTimer::InstrumentorTimer(std::string_view timerName, bool isFunction) :
 		m_Name{ timerName },
 		m_StartPoint{ std::chrono::high_resolution_clock::now() },
 		m_IsStopped{ false },

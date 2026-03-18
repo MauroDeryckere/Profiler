@@ -6,10 +6,10 @@
 
 namespace profiler
 {
-	void Profiler::BeginSession(std::string const& name, char const* path, uint32_t maxFrames, FlushCallback callback)
+	void Profiler::BeginSession(std::string const& name, std::string_view filepath, uint32_t maxFrames, FlushCallback callback)
 	{
 		EndSession();
-		m_FileName = path ? path : "";
+		m_FileName = filepath;
 		m_MaxFrames = maxFrames;
 		m_ProfiledFrames = 0;
 		m_FlushCallback = std::move(callback);
@@ -36,19 +36,20 @@ namespace profiler
 		}
 	}
 
-	void Profiler::PrepareOutputPath(char const* filepath)
+	void Profiler::PrepareOutputPath(std::string_view filepath)
 	{
-		assert(filepath && "PrepareOutputPath requires a non-null filepath");
-		std::filesystem::path const dir{ std::filesystem::path(filepath).parent_path() };
+		assert(!filepath.empty() && "PrepareOutputPath requires a non-empty filepath");
+		std::filesystem::path const fsPath{ filepath };
+		std::filesystem::path const dir{ fsPath.parent_path() };
 
 		if (!dir.empty() && !std::filesystem::exists(dir))
 		{
 			std::filesystem::create_directories(dir);
 		}
 
-		if (std::filesystem::exists(filepath))
+		if (std::filesystem::exists(fsPath))
 		{
-			std::filesystem::remove(filepath);
+			std::filesystem::remove(fsPath);
 		}
 	}
 }

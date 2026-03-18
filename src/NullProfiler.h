@@ -13,13 +13,13 @@ namespace profiler
 		~NullProfiler() override = default;
 
 		/** @see Profiler::WriteProfile */
-		void WriteProfile(ProfileResult const& result, bool isFunction) noexcept override {}
+		void WriteProfile(ProfileResult const& result, bool isFunction) override {}
 
 		/** @see Profiler::EndSession */
-		void EndSession() noexcept override {}
+		void EndSession() override {}
 
 		/** @see Profiler::FlushToString */
-		[[nodiscard]] std::string FlushToString() const noexcept override { return {}; }
+		[[nodiscard]] std::string FlushToString() const override { return {}; }
 
 		NullProfiler(NullProfiler const&) = delete;
 		NullProfiler(NullProfiler&&) = delete;

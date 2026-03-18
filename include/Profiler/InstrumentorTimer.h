@@ -2,6 +2,7 @@
 #define PROFILER_INSTRUMENTOR_TIMER_H
 
 #include <chrono>
+#include <string_view>
 
 namespace profiler
 {
@@ -18,7 +19,7 @@ namespace profiler
 		 * @param timerName		Name shown in the trace viewer.
 		 * @param isFunction	True if profiling a function, false for a named scope.
 		 */
-		explicit InstrumentorTimer(char const* timerName, bool isFunction);
+		explicit InstrumentorTimer(std::string_view timerName, bool isFunction);
 
 		/** Stops the timer if not already stopped and emits the complete profile event. */
 		~InstrumentorTimer();
@@ -32,7 +33,7 @@ namespace profiler
 		InstrumentorTimer& operator=(InstrumentorTimer&&) = delete;
 
 	private:
-		char const* m_Name{ "NO NAME" };
+		std::string_view m_Name{ "NO NAME" };
 		std::chrono::time_point<std::chrono::high_resolution_clock> m_StartPoint{};
 		bool m_IsStopped{ false };
 		bool m_IsFunction{};

@@ -29,7 +29,7 @@ namespace profiler
 		EndSession();
 	}
 
-	void GoogleProfiler::BeginSession(std::string const& name, char const* filepath, uint32_t maxFrames, FlushCallback callback)
+	void GoogleProfiler::BeginSession(std::string const& name, std::string_view filepath, uint32_t maxFrames, FlushCallback callback)
 	{
 		Profiler::BeginSession(name, filepath, maxFrames, std::move(callback));
 		m_ThreadBuffers.clear();
@@ -66,11 +66,12 @@ namespace profiler
 
 		auto& d{ s_Cache.buffer->data };
 		auto const* cat{ isFunction ? "function" : "scope" };
-		char tsBuf[24];
-		char durBuf[24];
+		constexpr size_t TIMESTAMP_BUF_SIZE{ 24 };
+		char tsBuf[TIMESTAMP_BUF_SIZE];
+		char durBuf[TIMESTAMP_BUF_SIZE];
 
-		snprintf(tsBuf, sizeof(tsBuf), "%" PRId64, static_cast<int64_t>(result.start));
-		snprintf(durBuf, sizeof(durBuf), "%" PRId64, static_cast<int64_t>(result.end - result.start));
+		snprintf(tsBuf, sizeof(tsBuf), "%" PRId64, result.start);
+		snprintf(durBuf, sizeof(durBuf), "%" PRId64, result.end - result.start);
 
 		d += R"(,{"cat":")";
 		d += cat;
@@ -111,10 +112,10 @@ namespace profiler
 	{
 		if (m_Active)
 		{
-			if (!m_FileName.empty())
+			if (!GetFileName().empty())
 			{
-				auto const path{ m_FileName + ".json" };
-				PrepareOutputPath(path.c_str());
+				auto const path{ GetFileName() + ".json" };
+				PrepareOutputPath(path);
 
 				std::ofstream out(path);
 				if (out.is_open())

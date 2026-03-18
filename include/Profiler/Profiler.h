@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <functional>
 #include <string>
+#include <string_view>
 #include <thread>
 
 namespace profiler
@@ -11,9 +12,9 @@ namespace profiler
 	/** Holds the result of a single profiled scope or function. */
 	struct ProfileResult final
 	{
-		char const* name;
-		long long start;
-		long long end;
+		std::string_view name;
+		int64_t start;
+		int64_t end;
 		std::thread::id threadID;
 	};
 
@@ -28,11 +29,11 @@ namespace profiler
 		/**
 		 * Begins a new profiling session.
 		 * @param name		Display name for the session.
-		 * @param filepath	Output file path (extension is appended by the backend). Pass nullptr for string-only output via FlushToString().
+		 * @param filepath	Output file path (extension is appended by the backend). Empty for string-only output via FlushToString().
 		 * @param maxFrames	If > 0, Tick() will auto-end the session after this many calls. 0 means manual EndSession() only.
 		 * @param callback	Called with the trace JSON when the session auto-ends via Tick().
 		 */
-		virtual void BeginSession(std::string const& name, char const* filepath = nullptr, uint32_t maxFrames = 0, FlushCallback callback = nullptr);
+		virtual void BeginSession(std::string const& name, std::string_view filepath = {}, uint32_t maxFrames = 0, FlushCallback callback = nullptr);
 
 		/** Ends the current session and flushes all buffered data to disk. */
 		virtual void EndSession() = 0;
@@ -64,7 +65,7 @@ namespace profiler
 		 * Creates parent directories for filepath and removes any existing file at that path.
 		 * @param filepath	The target file path to prepare.
 		 */
-		static void PrepareOutputPath(char const* filepath);
+		static void PrepareOutputPath(std::string_view filepath);
 
 		Profiler(Profiler const&) = delete;
 		Profiler(Profiler&&) = delete;
@@ -73,9 +74,10 @@ namespace profiler
 
 	protected:
 		Profiler() = default;
-		std::string m_FileName;
+		[[nodiscard]] std::string const& GetFileName() const noexcept { return m_FileName; }
 
 	private:
+		std::string m_FileName;
 		uint32_t m_ProfiledFrames{ 0 };
 		uint32_t m_MaxFrames{ 0 };
 		FlushCallback m_FlushCallback;

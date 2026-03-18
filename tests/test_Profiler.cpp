@@ -95,7 +95,7 @@ TEST_F(ProfilerBaseTest, TickWithCallbackReceivesJson)
 	profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
 
 	std::string captured;
-	PROFILER.BeginSession("test", nullptr, 2, [&](std::string const& json) { captured = json; });
+	PROFILER.BeginSession("test", {}, 2, [&](std::string const& json) { captured = json; });
 
 	PROFILER.Tick(); // frame 1
 	EXPECT_TRUE(captured.empty());
@@ -129,7 +129,7 @@ TEST_F(ProfilerBaseTest, TickWithCallbackOnlyDoesNotCreateFile)
 	profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
 
 	std::string captured;
-	PROFILER.BeginSession("test", nullptr, 2, [&](std::string const& json) { captured = json; });
+	PROFILER.BeginSession("test", {}, 2, [&](std::string const& json) { captured = json; });
 
 	PROFILER.Tick();
 	PROFILER.Tick();

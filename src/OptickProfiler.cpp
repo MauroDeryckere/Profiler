@@ -5,9 +5,9 @@
 
 namespace profiler
 {
-	void OptickProfiler::BeginSession(std::string const& name, char const* filepath, uint32_t maxFrames, FlushCallback callback)
+	void OptickProfiler::BeginSession(std::string const& name, std::string_view filepath, uint32_t maxFrames, FlushCallback callback)
 	{
-		assert(filepath && "OptickProfiler requires a file path — use BeginSession(name, filepath)");
+		assert(!filepath.empty() && "OptickProfiler requires a file path — use BeginSession(name, filepath)");
 		Profiler::BeginSession(name, filepath, maxFrames, std::move(callback));
 		OPTICK_START_CAPTURE()
 	}
@@ -19,8 +19,8 @@ namespace profiler
 
 	void OptickProfiler::EndSession()
 	{
-		auto const path{ m_FileName + ".opt" };
-		PrepareOutputPath(path.c_str());
+		auto const path{ GetFileName() + ".opt" };
+		PrepareOutputPath(path);
 
 		OPTICK_STOP_CAPTURE()
 		OPTICK_SAVE_CAPTURE(path.c_str())

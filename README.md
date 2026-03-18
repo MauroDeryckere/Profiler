@@ -1,6 +1,6 @@
 # Profiler
 
-A lightweight, cross-platform C++17 profiling library with Chrome DevTools and Optick backend support.
+A lightweight, cross-platform C++20 profiling library with Chrome DevTools and Optick backend support.
 
 ## Features
 
