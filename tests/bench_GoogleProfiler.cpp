@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "GoogleProfiler.h"
+#include "Profiler/GoogleProfiler.h"
 #include "Profiler/InstrumentorTimer.h"
 #include "Profiler/ServiceLocator.h"
 
@@ -191,7 +191,6 @@ TEST_F(ProfilerBench, InstrumentorTimerOverhead)
 
 	double const avgUs{ TrimmedMeanUs([&]()
 	{
-		profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
 		PROFILER.BeginSession("bench");
 
 		auto const start{ Now() };

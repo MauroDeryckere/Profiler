@@ -1,22 +1,22 @@
 #ifndef PROFILER_SERVICE_LOCATOR_H
 #define PROFILER_SERVICE_LOCATOR_H
 
-#include "Profiler/Profiler.h"
-
-#include <memory>
+#if defined(PROFILER_USE_OPTICK)
+	#include "Profiler/OptickProfiler.h"
+#else
+	#include "Profiler/GoogleProfiler.h"
+#endif
 
 namespace profiler
 {
 	namespace ServiceLocator
 	{
-		/** @return Reference to the currently registered profiler backend. */
-		[[nodiscard]] Profiler& GetProfiler() noexcept;
-
-		/**
-		 * Registers a profiler backend. Replaces any previously registered instance.
-		 * @param profiler	The profiler backend to register. Ownership is transferred.
-		 */
-		void RegisterProfiler(std::unique_ptr<Profiler> profiler);
+		/** @return Reference to the compile-time selected profiler backend. */
+#if defined(PROFILER_USE_OPTICK)
+		[[nodiscard]] OptickProfiler& GetProfiler() noexcept;
+#else
+		[[nodiscard]] GoogleProfiler& GetProfiler() noexcept;
+#endif
 	}
 }
 

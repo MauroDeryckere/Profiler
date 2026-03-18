@@ -1,4 +1,4 @@
-#include "OptickProfiler.h"
+#include "Profiler/OptickProfiler.h"
 
 #include <Optick.h>
 #include <cassert>

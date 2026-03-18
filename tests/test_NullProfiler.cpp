@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "NullProfiler.h"
+#include "Profiler/NullProfiler.h"
 
 TEST(NullProfiler, CanConstruct)
 {

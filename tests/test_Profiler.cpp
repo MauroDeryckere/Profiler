@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "Profiler/Profiler.h"
 #include "Profiler/ServiceLocator.h"
-#include "GoogleProfiler.h"
+#include "Profiler/GoogleProfiler.h"
 
 #include <filesystem>
 #include <fstream>
@@ -20,6 +20,7 @@ namespace
 
 		void TearDown() override
 		{
+			PROFILER.EndSession();
 			std::filesystem::remove_all(TEST_DIR);
 		}
 	};
@@ -47,8 +48,6 @@ TEST_F(ProfilerBaseTest, PrepareOutputPathRemovesExistingFile)
 
 TEST_F(ProfilerBaseTest, TickAutoEndsSession)
 {
-	profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
-
 	PROFILER.BeginSession("test", (TEST_DIR + "/autoend").c_str(), 3);
 
 	PROFILER.Tick(); // frame 1
@@ -61,8 +60,6 @@ TEST_F(ProfilerBaseTest, TickAutoEndsSession)
 TEST_F(ProfilerBaseTest, TickNoOpWithoutFrameLimit)
 {
 	uint32_t constexpr TICKS{ 100 };
-
-	profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
 
 	PROFILER.BeginSession("test", (TEST_DIR + "/manual").c_str());
 
@@ -78,8 +75,6 @@ TEST_F(ProfilerBaseTest, TickNoOpWithoutFrameLimit)
 
 TEST_F(ProfilerBaseTest, BeginSessionWhileActiveEndsFirst)
 {
-	profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
-
 	PROFILER.BeginSession("first", (TEST_DIR + "/first").c_str());
 	PROFILER.BeginSession("second", (TEST_DIR + "/second").c_str());
 
@@ -92,8 +87,6 @@ TEST_F(ProfilerBaseTest, BeginSessionWhileActiveEndsFirst)
 
 TEST_F(ProfilerBaseTest, TickWithCallbackReceivesJson)
 {
-	profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
-
 	std::string captured;
 	PROFILER.BeginSession("test", {}, 2, [&](std::string const& json) { captured = json; });
 
@@ -107,8 +100,6 @@ TEST_F(ProfilerBaseTest, TickWithCallbackReceivesJson)
 
 TEST_F(ProfilerBaseTest, TickWithFileAndCallbackBothWork)
 {
-	profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
-
 	std::string captured;
 	PROFILER.BeginSession("test", (TEST_DIR + "/combo").c_str(), 2, [&](std::string const& json) { captured = json; });
 
@@ -126,8 +117,6 @@ TEST_F(ProfilerBaseTest, TickWithFileAndCallbackBothWork)
 
 TEST_F(ProfilerBaseTest, TickWithCallbackOnlyDoesNotCreateFile)
 {
-	profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
-
 	std::string captured;
 	PROFILER.BeginSession("test", {}, 2, [&](std::string const& json) { captured = json; });
 

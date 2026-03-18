@@ -127,28 +127,12 @@ while (running)
 
 | Function                                       | Description                                    |
 |------------------------------------------------|------------------------------------------------|
-| `GetProfiler()`                                | Access the active profiler                     |
-| `RegisterProfiler(std::unique_ptr<Profiler>)`  | Swap in a custom backend                       |
+| `GetProfiler()`                                | Access the profiler (concrete type, no virtual dispatch) |
 
-The profiler is auto-initialized at static init time based on compile flags — no manual setup needed.
-
-## Custom Backend
-
-Implement the `profiler::Profiler` interface to create your own backend:
-
-```cpp
-#include <Profiler/Profiler.h>
-
-class MyProfiler : public profiler::Profiler
-{
-    void WriteProfile(profiler::ProfileResult const& result, bool isFunction) override { /* ... */ }
-    void EndSession() override { /* ... */ }
-    [[nodiscard]] std::string FlushToString() const override { return {}; }
-};
-
-// Register it:
-profiler::ServiceLocator::RegisterProfiler(std::make_unique<MyProfiler>());
-```
+The backend is selected at compile time (`PROFILER_USE_OPTICK` flag). `GetProfiler()` returns the concrete
+type (`GoogleProfiler&` or `OptickProfiler&`), enabling the compiler to devirtualize all calls. To disable
+profiling at runtime, simply call `EndSession()` or don't call `BeginSession()` — `WriteProfile` is a no-op
+when no session is active.
 
 ## Building & Testing
 
@@ -169,20 +153,22 @@ cd build && ctest -C Release --output-on-failure
 ## Project Structure
 
 ```
-include/Profiler/          Public API headers
+include/Profiler/          Public headers
   Profiler.h               Base profiler class & ProfileResult
   InstrumentorTimer.h      RAII scope timer
   ServiceLocator.h         Global instance management & PROFILER macro
   ProfilerMacros.h         Instrumentation macros (main include)
-
-src/                       Private implementation
-  GoogleProfiler.h/.cpp    Chrome Trace Event Format backend
-  OptickProfiler.h/.cpp    Optick backend (optional)
+  GoogleProfiler.h         Chrome Trace Event Format backend
+  OptickProfiler.h         Optick backend (optional)
   NullProfiler.h           No-op backend
+
+src/                       Implementation
+  GoogleProfiler.cpp       Google backend implementation
+  OptickProfiler.cpp       Optick backend implementation (optional)
   ServiceLocator.cpp       Backend initialization
 
-example/                   Example application (7 demos)
-tests/                     Google Test suite (48 tests + 5 benchmarks)
+example/                   Example application (6 demos)
+tests/                     Google Test suite (46 tests + 5 benchmarks)
 cmake/                     CMake package config
 ```
 
@@ -218,17 +204,17 @@ Measured on Windows 11, MSVC 19.x, Release build (`/O2`), AMD Ryzen 7 5800H.
 
 | Benchmark | Calls | Avg time | Per-call |
 |---|---|---|---|
-| WriteProfile (single thread) | 100,000 | 4.9 ms | **49 ns/call** |
-| WriteProfile (4 threads) | 100,000 | 3.3 ms | **33 ns/call** |
-| InstrumentorTimer RAII | 50,000 | 9.0 ms | **181 ns/cycle** |
-| FlushToString (10k events) | 100 | 478.2 ms | **4.78 ms/call** |
-| Session lifecycle (with file I/O) | 1,000 | 1,865.9 ms | **1,866 us/cycle** |
+| WriteProfile (single thread) | 100,000 | 5.1 ms | **51 ns/call** |
+| WriteProfile (4 threads) | 100,000 | 3.8 ms | **38 ns/call** |
+| InstrumentorTimer RAII | 50,000 | 6.3 ms | **127 ns/cycle** |
+| FlushToString (10k events) | 100 | 273.3 ms | **2.73 ms/call** |
+| Session lifecycle (with file I/O) | 1,000 | 1,645.7 ms | **1,646 us/cycle** |
 
 ### How to read these numbers
 
-- **InstrumentorTimer at ~181 ns/cycle** is the real-world cost of `PROFILER_SCOPE()`. On a 60fps
-  frame (~16.6 ms), profiling 100 scopes costs ~0.018 ms, or about **0.1% of your frame budget**.
-- **Multi-threaded scaling** shows near-linear improvement (33 ns/call with 4 threads vs 49 ns
+- **InstrumentorTimer at ~127 ns/cycle** is the real-world cost of `PROFILER_SCOPE()`. On a 60fps
+  frame (~16.6 ms), profiling 100 scopes costs ~0.013 ms, or about **0.08% of your frame budget**.
+- **Multi-threaded scaling** shows near-linear improvement (38 ns/call with 4 threads vs 51 ns
   single-threaded) because each thread writes to its own lock-free buffer.
 - **Session lifecycle** is dominated by filesystem I/O (~1.9 ms per cycle). This only happens when
   you call `BeginSession`/`EndSession`, not during normal profiling.

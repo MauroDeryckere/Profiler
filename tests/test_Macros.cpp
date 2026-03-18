@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "Profiler/ProfilerMacros.h"
 #include "Profiler/ServiceLocator.h"
-#include "GoogleProfiler.h"
+#include "Profiler/GoogleProfiler.h"
 
 #include <filesystem>
 #include <fstream>
@@ -22,11 +22,11 @@ namespace
 		void SetUp() override
 		{
 			std::filesystem::create_directories(TEST_DIR);
-			profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
 		}
 
 		void TearDown() override
 		{
+			PROFILER.EndSession();
 			std::filesystem::remove_all(TEST_DIR);
 		}
 	};

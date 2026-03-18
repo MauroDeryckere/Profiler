@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "GoogleProfiler.h"
+#include "Profiler/GoogleProfiler.h"
 
 #include <filesystem>
 #include <fstream>

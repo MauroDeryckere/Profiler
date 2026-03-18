@@ -37,6 +37,13 @@ target_include_directories(Profiler
 
 target_compile_features(Profiler PUBLIC cxx_std_20)
 
+# --- Link-time optimization ---
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported)
+if(ipo_supported)
+	set_target_properties(Profiler PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
+
 # --- Warnings as errors (library only) ---
 target_compile_options(Profiler PRIVATE
 	$<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>

@@ -32,5 +32,9 @@ target_include_directories(ProfilerTests
 
 target_compile_features(ProfilerTests PRIVATE cxx_std_23)
 
+if(ipo_supported)
+	set_target_properties(ProfilerTests PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
+
 include(GoogleTest)
 gtest_discover_tests(ProfilerTests)

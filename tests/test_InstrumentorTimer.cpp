@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "Profiler/ServiceLocator.h"
 #include "Profiler/InstrumentorTimer.h"
-#include "GoogleProfiler.h"
+#include "Profiler/GoogleProfiler.h"
 
 #include <filesystem>
 #include <fstream>
@@ -23,8 +23,6 @@ namespace
 		void SetUp() override
 		{
 			std::filesystem::create_directories(TEST_DIR);
-			auto gp{ std::make_unique<profiler::GoogleProfiler>() };
-			profiler::ServiceLocator::RegisterProfiler(std::move(gp));
 			PROFILER.BeginSession("timer_test", (TEST_DIR + "/timer").c_str());
 		}
 

@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "Profiler/InstrumentorTimer.h"
-#include "GoogleProfiler.h"
+#include "Profiler/GoogleProfiler.h"
 
 // ---------------------------------------------------------------------------
 // Basic profiling: functions and scopes
@@ -156,28 +156,6 @@ void RunManualStopDemo()
 }
 
 // ---------------------------------------------------------------------------
-// Custom backend via RegisterProfiler
-// ---------------------------------------------------------------------------
-void RunRegisterProfilerDemo()
-{
-	// Swap in a fresh GoogleProfiler instance at runtime
-	profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
-
-	PROFILER_BEGIN_SESSION("CustomBackend", "profiling/custom_backend");
-
-	{
-		PROFILER_SCOPE("AfterSwap");
-		volatile double x{ 0.0 };
-		for (uint32_t i{ 0 }; i < 100'000; ++i)
-		{
-			x += static_cast<double>(i);
-		}
-	}
-
-	PROFILER_END_SESSION();
-}
-
-// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -234,11 +212,6 @@ int main()
 	std::cout << "\n=== Demo 6: Manual Timer Stop ===\n";
 	RunManualStopDemo();
 	std::cout << "  -> profiling/manual_stop.json\n";
-
-	// --- Demo 7: RegisterProfiler (swap backend at runtime) ---
-	std::cout << "\n=== Demo 7: RegisterProfiler (Custom Backend) ===\n";
-	RunRegisterProfilerDemo();
-	std::cout << "  -> profiling/custom_backend.json\n";
 
 	std::cout << "\nAll done! Open .json files in chrome://tracing or https://ui.perfetto.dev\n";
 	return 0;
