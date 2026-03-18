@@ -10,7 +10,7 @@
 
 namespace profiler
 {
-	enum class TraceEventType : uint8_t { Function, Scope, FrameMark };
+	enum class TraceEventType : uint8_t { Function, Scope };
 
 	/** A single recorded trace event. Stored as binary data on the hot path; converted to JSON at session end. */
 	struct TraceEvent final

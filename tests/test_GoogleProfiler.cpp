@@ -346,19 +346,20 @@ TEST_F(GoogleProfilerTest, SetThreadNamePerThread)
 	EXPECT_NE(content.find("\"Worker\""), std::string::npos);
 }
 
-TEST_F(GoogleProfilerTest, MarkFrameProducesEvent)
+TEST_F(GoogleProfilerTest, MarkFrameNamesThread)
 {
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
 	p.MarkFrame("MainThread");
+	profiler::ProfileResult const result{ "Entry", 0, 100};
+	p.WriteProfile(result, true);
 
 	p.EndSession();
 
 	auto const content{ ReadFileContents(TEST_DIR + "/output.json") };
 	EXPECT_NE(content.find("\"MainThread\""), std::string::npos);
-	EXPECT_NE(content.find("\"ph\":\"i\""), std::string::npos);
-	EXPECT_NE(content.find("\"s\":\"t\""), std::string::npos);
+	EXPECT_EQ(content.find("\"Thread 1\""), std::string::npos);
 }
 
 TEST_F(GoogleProfilerTest, SetThreadNameWithoutSessionIsSafe)

@@ -1,7 +1,6 @@
 #include "GoogleProfiler.h"
 
 #include <atomic>
-#include <chrono>
 #include <cinttypes>
 #include <cstdio>
 #include <fstream>
@@ -83,22 +82,7 @@ namespace profiler
 
 	void GoogleProfiler::MarkFrame(std::string_view name)
 	{
-		if (!m_Active)
-		{
-			return;
-		}
-
-		EnsureThreadBuffer();
-
-		if (s_Cache.buffer->threadName.empty())
-		{
-			s_Cache.buffer->threadName = name;
-		}
-
-		auto const now{ std::chrono::time_point_cast<std::chrono::microseconds>(
-			std::chrono::high_resolution_clock::now()).time_since_epoch().count() };
-
-		s_Cache.buffer->events.emplace_back(name, now, 0, TraceEventType::FrameMark);
+		SetThreadName(name);
 	}
 
 	std::string GoogleProfiler::BuildJson() const
@@ -138,33 +122,19 @@ namespace profiler
 			// Trace events
 			for (auto const& e : tb->events)
 			{
-				if (e.type == TraceEventType::FrameMark)
-				{
-					json += R"(,{"name":")";
-					json += e.name;
-					json += R"(","ph":"i","pid":0,"tid":)";
-					json += tidStr;
-					json += R"(,"ts":)";
-					auto const len{ snprintf(buf, sizeof(buf), "%" PRId64, e.start) };
-					json.append(buf, static_cast<size_t>(len));
-					json += R"(,"s":"t"})";
-				}
-				else
-				{
-					json += R"(,{"cat":")";
-					json += e.type == TraceEventType::Function ? "function" : "scope";
-					json += R"(","name":")";
-					json += e.name;
-					json += R"(","ph":"X","pid":0,"tid":)";
-					json += tidStr;
-					json += R"(,"ts":)";
-					auto len{ snprintf(buf, sizeof(buf), "%" PRId64, e.start) };
-					json.append(buf, static_cast<size_t>(len));
-					json += R"(,"dur":)";
-					len = snprintf(buf, sizeof(buf), "%" PRId64, e.duration);
-					json.append(buf, static_cast<size_t>(len));
-					json += '}';
-				}
+				json += R"(,{"cat":")";
+				json += e.type == TraceEventType::Function ? "function" : "scope";
+				json += R"(","name":")";
+				json += e.name;
+				json += R"(","ph":"X","pid":0,"tid":)";
+				json += tidStr;
+				json += R"(,"ts":)";
+				auto len{ snprintf(buf, sizeof(buf), "%" PRId64, e.start) };
+				json.append(buf, static_cast<size_t>(len));
+				json += R"(,"dur":)";
+				len = snprintf(buf, sizeof(buf), "%" PRId64, e.duration);
+				json.append(buf, static_cast<size_t>(len));
+				json += '}';
 			}
 		}
 
