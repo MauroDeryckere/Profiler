@@ -87,10 +87,17 @@ namespace profiler
 			return;
 		}
 
+		EnsureThreadBuffer();
+
+		if (s_Cache.buffer->threadName.empty())
+		{
+			s_Cache.buffer->threadName = name;
+		}
+
 		auto const now{ std::chrono::time_point_cast<std::chrono::microseconds>(
 			std::chrono::high_resolution_clock::now()).time_since_epoch().count() };
 
-		WriteProfile({ name, now, now }, false);
+		s_Cache.buffer->events.emplace_back(name, now, 0, false);
 	}
 
 	std::string GoogleProfiler::BuildJson() const
@@ -99,14 +106,15 @@ namespace profiler
 		json += R"({"otherData":{},"traceEvents":[)";
 
 		bool first{ true };
+		char tidBuf[16];
 		char buf[64];
 
 		for (auto const& tb : m_ThreadBuffers)
 		{
 			if (tb->events.empty()) continue;
 
-			auto const tidLen{ snprintf(buf, sizeof(buf), "%u", tb->tid) };
-			std::string_view const tidStr{ buf, static_cast<size_t>(tidLen) };
+			auto const tidLen{ snprintf(tidBuf, sizeof(tidBuf), "%u", tb->tid) };
+			std::string_view const tidStr{ tidBuf, static_cast<size_t>(tidLen) };
 
 			// Thread metadata event
 			if (!first) json += ',';
