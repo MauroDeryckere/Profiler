@@ -10,13 +10,15 @@
 
 namespace profiler
 {
+	enum class TraceEventType : uint8_t { Function, Scope, FrameMark };
+
 	/** A single recorded trace event. Stored as binary data on the hot path; converted to JSON at session end. */
 	struct TraceEvent final
 	{
 		std::string_view name;
 		int64_t start;
 		int64_t duration;
-		bool isFunction;
+		TraceEventType type;
 	};
 
 	/** Per-thread buffer that accumulates trace events without locking. */
