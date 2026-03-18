@@ -13,7 +13,7 @@ namespace profiler
 		~NullProfiler() override = default;
 
 		/** @see Profiler::WriteProfile */
-		void WriteProfile(ProfileResult const& result, bool isFunction) override {}
+		void WriteProfile(ProfileResult const& /*result*/, bool /*isFunction*/) override {}
 
 		/** @see Profiler::EndSession */
 		void EndSession() override {}

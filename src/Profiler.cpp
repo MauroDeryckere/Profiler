@@ -6,7 +6,7 @@
 
 namespace profiler
 {
-	void Profiler::BeginSession(std::string const& name, std::string_view filepath, uint32_t maxFrames, FlushCallback callback)
+	void Profiler::BeginSession(std::string const& /*name*/, std::string_view filepath, uint32_t maxFrames, FlushCallback callback)
 	{
 		EndSession();
 		m_FileName = filepath;
