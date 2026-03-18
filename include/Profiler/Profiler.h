@@ -8,7 +8,9 @@
 
 namespace profiler
 {
-	/** Holds the result of a single profiled scope or function. */
+	/** Holds the result of a single profiled scope or function.
+	 *  @note name must point to storage that outlives the profiling session
+	 *        (e.g. a string literal or __FUNCTION__). The profiler does not copy it. */
 	struct ProfileResult final
 	{
 		std::string_view name;

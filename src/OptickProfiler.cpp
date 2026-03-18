@@ -19,6 +19,11 @@ namespace profiler
 
 	void OptickProfiler::EndSession()
 	{
+		if (GetFileName().empty())
+		{
+			return;
+		}
+
 		auto const path{ GetFileName() + ".opt" };
 		PrepareOutputPath(path);
 
