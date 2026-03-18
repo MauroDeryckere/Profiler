@@ -1,23 +1,29 @@
 #ifndef PROFILER_GOOGLE_PROFILER_H
 #define PROFILER_GOOGLE_PROFILER_H
 
-// TODO: Potential future optimizations (diminishing returns — hot path is dominated by clock calls):
-// - Binary ring buffer: write fixed-size structs instead of JSON strings, convert at session end
-// - Compile-time dispatch: replace virtual WriteProfile with templates/if constexpr to enable inlining
-
 #include "Profiler/Profiler.h"
 
 #include <memory>
 #include <mutex>
+#include <string_view>
 #include <vector>
 
 namespace profiler
 {
+	/** A single recorded trace event. Stored as binary data on the hot path; converted to JSON at session end. */
+	struct TraceEvent final
+	{
+		std::string_view name;
+		int64_t start;
+		int64_t duration;
+		bool isFunction;
+	};
+
 	/** Per-thread buffer that accumulates trace events without locking. */
 	struct ThreadBuffer final
 	{
-		std::string data;
-		std::string tidStr;
+		std::vector<TraceEvent> events;
+		uint32_t tid{ 0 };
 	};
 
 	/**

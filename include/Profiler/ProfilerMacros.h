@@ -44,8 +44,8 @@
 		#define PROFILER_FRAME(name)
 	#endif
 
-	#define PROFILER_BEGIN_SESSION(name, ...) PROFILER.BeginSession(name, ##__VA_ARGS__)
-	#define PROFILER_END_SESSION()                 PROFILER.EndSession()
+	#define PROFILER_BEGIN_SESSION(name, ...)	 PROFILER.BeginSession(name, ##__VA_ARGS__)
+	#define PROFILER_END_SESSION()               PROFILER.EndSession()
 	#define PROFILER_TICK()                      PROFILER.Tick()
 
 #else

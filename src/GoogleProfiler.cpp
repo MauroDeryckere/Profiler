@@ -4,11 +4,14 @@
 #include <cinttypes>
 #include <cstdio>
 #include <fstream>
+#include <string>
 
 namespace profiler
 {
 	namespace
 	{
+		uint32_t constexpr INITIAL_EVENT_CAPACITY{ 4096 };
+
 		uint32_t nextSessionId()
 		{
 			static std::atomic<uint32_t> counter{ 0 };
@@ -50,40 +53,15 @@ namespace profiler
 			std::lock_guard lock(m_Mutex);
 
 			auto tb{ std::make_unique<ThreadBuffer>() };
-			tb->data.reserve(100'000);
-			tb->tidStr = std::to_string(m_NextThreadId++);
-
-			tb->data += R"({"name":"thread_name","ph":"M","pid":0,"tid":)";
-			tb->data += tb->tidStr;
-			tb->data += R"(,"args":{"name":"Thread )";
-			tb->data += tb->tidStr;
-			tb->data += R"("}})";
+			tb->events.reserve(INITIAL_EVENT_CAPACITY);
+			tb->tid = m_NextThreadId++;
 
 			s_Cache.buffer = tb.get();
 			s_Cache.sessionId = m_SessionId;
 			m_ThreadBuffers.emplace_back(std::move(tb));
 		}
 
-		auto& d{ s_Cache.buffer->data };
-		auto const* cat{ isFunction ? "function" : "scope" };
-		constexpr size_t TIMESTAMP_BUF_SIZE{ 24 };
-		char tsBuf[TIMESTAMP_BUF_SIZE];
-		char durBuf[TIMESTAMP_BUF_SIZE];
-
-		snprintf(tsBuf, sizeof(tsBuf), "%" PRId64, result.start);
-		snprintf(durBuf, sizeof(durBuf), "%" PRId64, result.end - result.start);
-
-		d += R"(,{"cat":")";
-		d += cat;
-		d += R"(","name":")";
-		d += result.name;
-		d += R"(","ph":"X","pid":0,"tid":)";
-		d += s_Cache.buffer->tidStr;
-		d += R"(,"ts":)";
-		d += tsBuf;
-		d += R"(,"dur":)";
-		d += durBuf;
-		d += '}';
+		s_Cache.buffer->events.emplace_back(result.name, result.start, result.end - result.start, isFunction);
 	}
 
 	std::string GoogleProfiler::BuildJson() const
@@ -92,16 +70,42 @@ namespace profiler
 		json += R"({"otherData":{},"traceEvents":[)";
 
 		bool first{ true };
+		char buf[64];
+
 		for (auto const& tb : m_ThreadBuffers)
 		{
-			if (tb->data.empty()) continue;
+			if (tb->events.empty()) continue;
 
-			if (!first)
-			{
-				json += ',';
-			}
+			auto const tidLen{ snprintf(buf, sizeof(buf), "%u", tb->tid) };
+			std::string_view const tidStr{ buf, static_cast<size_t>(tidLen) };
+
+			// Thread metadata event
+			if (!first) json += ',';
 			first = false;
-			json += tb->data;
+
+			json += R"({"name":"thread_name","ph":"M","pid":0,"tid":)";
+			json += tidStr;
+			json += R"(,"args":{"name":"Thread )";
+			json += tidStr;
+			json += R"("}})";
+
+			// Trace events
+			for (auto const& e : tb->events)
+			{
+				json += R"(,{"cat":")";
+				json += e.isFunction ? "function" : "scope";
+				json += R"(","name":")";
+				json += e.name;
+				json += R"(","ph":"X","pid":0,"tid":)";
+				json += tidStr;
+				json += R"(,"ts":)";
+				auto len{ snprintf(buf, sizeof(buf), "%" PRId64, e.start) };
+				json.append(buf, static_cast<size_t>(len));
+				json += R"(,"dur":)";
+				len = snprintf(buf, sizeof(buf), "%" PRId64, e.duration);
+				json.append(buf, static_cast<size_t>(len));
+				json += '}';
+			}
 		}
 
 		json += "]}";
