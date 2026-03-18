@@ -16,7 +16,7 @@ namespace
 		return { std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
 	}
 
-	class MacrosTest final : public ::testing::Test
+	class MacrosTest : public ::testing::Test
 	{
 	protected:
 		void SetUp() override

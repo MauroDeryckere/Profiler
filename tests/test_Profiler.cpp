@@ -10,7 +10,7 @@ namespace
 {
 	std::string const TEST_DIR{ "test_profiler_output" };
 
-	class ProfilerBaseTest final : public ::testing::Test
+	class ProfilerBaseTest : public ::testing::Test
 	{
 	protected:
 		void SetUp() override

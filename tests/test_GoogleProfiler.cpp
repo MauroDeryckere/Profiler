@@ -15,7 +15,7 @@ namespace
 		return { std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
 	}
 
-	class GoogleProfilerTest final : public ::testing::Test
+	class GoogleProfilerTest : public ::testing::Test
 	{
 	protected:
 		void SetUp() override

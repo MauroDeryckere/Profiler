@@ -17,7 +17,7 @@ namespace
 		return { std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
 	}
 
-	class InstrumentorTimerTest final : public ::testing::Test
+	class InstrumentorTimerTest : public ::testing::Test
 	{
 	protected:
 		void SetUp() override
