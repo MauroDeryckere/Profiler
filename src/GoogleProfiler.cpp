@@ -1,7 +1,6 @@
 #include "Profiler/GoogleProfiler.h"
 
-#include <cinttypes>
-#include <cstdio>
+#include <charconv>
 #include <fstream>
 #include <string>
 
@@ -50,6 +49,8 @@ namespace profiler
 
 	void GoogleProfiler::MarkFrame(std::string_view name) noexcept
 	{
+		// Google Trace Event Format has no frame boundary concept.
+		// Falls back to naming the calling thread so the trace viewer can at least group events.
 		SetThreadName(name);
 	}
 

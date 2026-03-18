@@ -181,7 +181,6 @@ include/Profiler/          Public headers
   ProfilerMacros.h         Instrumentation macros (main include)
   GoogleProfiler.h         Chrome Trace Event Format backend
   OptickProfiler.h         Optick backend (optional)
-  NullProfiler.h           No-op backend
 
 src/                       Implementation
   GoogleProfiler.cpp       Google backend implementation
