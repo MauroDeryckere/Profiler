@@ -43,7 +43,7 @@ namespace profiler
 
 	void GoogleProfiler::EnsureThreadBuffer()
 	{
-		if (s_Cache.sessionId != m_SessionId)
+		if (s_Cache.sessionId != m_SessionId) [[unlikely]]
 		{
 			std::lock_guard lock(m_Mutex);
 
@@ -59,7 +59,7 @@ namespace profiler
 
 	void GoogleProfiler::WriteProfile(ProfileResult const& result, bool isFunction)
 	{
-		if (!m_Active)
+		if (!m_Active) [[unlikely]]
 		{
 			return;
 		}
@@ -71,7 +71,7 @@ namespace profiler
 
 	void GoogleProfiler::SetThreadName(std::string_view name)
 	{
-		if (!m_Active)
+		if (!m_Active) [[unlikely]]
 		{
 			return;
 		}
