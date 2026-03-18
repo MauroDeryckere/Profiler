@@ -245,7 +245,3 @@ cmake --build build --config Release
 - C++20 compiler (MSVC 2019 16.10+, GCC 10+, Clang 10+)
 - CMake 3.16+
 - (Optional) [Optick](https://github.com/bombomby/optick) for the Optick backend
-
-## License
-
-[Choose your license]
