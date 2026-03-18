@@ -67,34 +67,22 @@ namespace profiler
 		auto& d{ s_Cache.buffer->data };
 		auto const* cat{ isFunction ? "function" : "scope" };
 		char tsBuf[24];
+		char durBuf[24];
 
-		if (result.start >= 0)
-		{
-			snprintf(tsBuf, sizeof(tsBuf), "%" PRId64, static_cast<int64_t>(result.start));
-			d += R"(,{"cat":")";
-			d += cat;
-			d += R"(","name":")";
-			d += result.name;
-			d += R"(","ph":"B","pid":0,"tid":)";
-			d += s_Cache.buffer->tidStr;
-			d += R"(,"ts":)";
-			d += tsBuf;
-			d += '}';
-		}
+		snprintf(tsBuf, sizeof(tsBuf), "%" PRId64, static_cast<int64_t>(result.start));
+		snprintf(durBuf, sizeof(durBuf), "%" PRId64, static_cast<int64_t>(result.end - result.start));
 
-		if (result.end >= 0)
-		{
-			snprintf(tsBuf, sizeof(tsBuf), "%" PRId64, static_cast<int64_t>(result.end));
-			d += R"(,{"cat":")";
-			d += cat;
-			d += R"(","name":")";
-			d += result.name;
-			d += R"(","ph":"E","pid":0,"tid":)";
-			d += s_Cache.buffer->tidStr;
-			d += R"(,"ts":)";
-			d += tsBuf;
-			d += '}';
-		}
+		d += R"(,{"cat":")";
+		d += cat;
+		d += R"(","name":")";
+		d += result.name;
+		d += R"(","ph":"X","pid":0,"tid":)";
+		d += s_Cache.buffer->tidStr;
+		d += R"(,"ts":)";
+		d += tsBuf;
+		d += R"(,"dur":)";
+		d += durBuf;
+		d += '}';
 	}
 
 	std::string GoogleProfiler::BuildJson() const

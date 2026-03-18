@@ -5,14 +5,11 @@
 
 namespace profiler
 {
-	InstrumentorTimer::InstrumentorTimer(char const* timerName, bool isFunction)
-		: m_Name{ timerName }
-		, m_IsFunction{ isFunction }
-	{
-		m_StartPoint = std::chrono::high_resolution_clock::now();
-		auto const start{ std::chrono::time_point_cast<std::chrono::microseconds>(m_StartPoint).time_since_epoch().count() };
-		PROFILER.WriteProfile({ m_Name, start, -1, std::this_thread::get_id() }, m_IsFunction);
-	}
+	InstrumentorTimer::InstrumentorTimer(char const* timerName, bool isFunction) : 
+		m_Name{ timerName },
+		m_StartPoint{ std::chrono::high_resolution_clock::now() },
+		m_IsStopped{ false },
+		m_IsFunction{ isFunction } { }
 
 	InstrumentorTimer::~InstrumentorTimer()
 	{
@@ -25,10 +22,11 @@ namespace profiler
 	void InstrumentorTimer::Stop() noexcept
 	{
 		auto const endPoint{ std::chrono::high_resolution_clock::now() };
+		auto const start{ std::chrono::time_point_cast<std::chrono::microseconds>(m_StartPoint).time_since_epoch().count() };
 		auto const end{ std::chrono::time_point_cast<std::chrono::microseconds>(endPoint).time_since_epoch().count() };
 
 		m_IsStopped = true;
 
-		PROFILER.WriteProfile({ m_Name, -1, end, std::this_thread::get_id() }, m_IsFunction);
+		PROFILER.WriteProfile({ m_Name, start, end, std::this_thread::get_id() }, m_IsFunction);
 	}
 }

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 project(Profiler
 	VERSION 1.0.0
 	LANGUAGES CXX
-	DESCRIPTION "Lightweight, cross-platform C++17 profiling library"
+	DESCRIPTION "Lightweight, cross-platform C++20 profiling library"
 )
 
 # --- Options ---
@@ -35,7 +35,7 @@ target_include_directories(Profiler
 		${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-target_compile_features(Profiler PUBLIC cxx_std_17)
+target_compile_features(Profiler PUBLIC cxx_std_20)
 
 # --- Compile definitions ---
 if(PROFILER_ENABLED)

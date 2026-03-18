@@ -8,9 +8,9 @@
 
 namespace
 {
-	std::string const TEST_DIR = "test_profiler_output";
+	std::string const TEST_DIR{ "test_profiler_output" };
 
-	class ProfilerBaseTest : public ::testing::Test
+	class ProfilerBaseTest final : public ::testing::Test
 	{
 	protected:
 		void SetUp() override
@@ -27,7 +27,7 @@ namespace
 
 TEST_F(ProfilerBaseTest, PrepareOutputPathCreatesDirectories)
 {
-	std::string nested = TEST_DIR + "/a/b/c/file.json";
+	std::string const nested{ TEST_DIR + "/a/b/c/file.json" };
 	profiler::Profiler::PrepareOutputPath(nested.c_str());
 
 	EXPECT_TRUE(std::filesystem::exists(TEST_DIR + "/a/b/c"));
@@ -35,7 +35,7 @@ TEST_F(ProfilerBaseTest, PrepareOutputPathCreatesDirectories)
 
 TEST_F(ProfilerBaseTest, PrepareOutputPathRemovesExistingFile)
 {
-	std::string filePath = TEST_DIR + "/existing.json";
+	std::string const filePath{ TEST_DIR + "/existing.json" };
 
 	// Create the file
 	std::ofstream(filePath) << "dummy";
@@ -60,11 +60,13 @@ TEST_F(ProfilerBaseTest, TickAutoEndsSession)
 
 TEST_F(ProfilerBaseTest, TickNoOpWithoutFrameLimit)
 {
+	uint32_t constexpr TICKS{ 100 };
+
 	profiler::ServiceLocator::RegisterProfiler(std::make_unique<profiler::GoogleProfiler>());
 
 	PROFILER.BeginSession("test", (TEST_DIR + "/manual").c_str());
 
-	for (int i = 0; i < 100; ++i)
+	for (uint32_t i{ 0 }; i < TICKS; ++i)
 	{
 		PROFILER.Tick();
 	}
@@ -118,7 +120,7 @@ TEST_F(ProfilerBaseTest, TickWithFileAndCallbackBothWork)
 
 	EXPECT_TRUE(std::filesystem::exists(TEST_DIR + "/combo.json"));
 	std::ifstream file(TEST_DIR + "/combo.json");
-	std::string content{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
+	std::string const content{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
 	EXPECT_NE(content.find("\"traceEvents\""), std::string::npos);
 }
 

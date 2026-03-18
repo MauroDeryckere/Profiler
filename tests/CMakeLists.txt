@@ -15,6 +15,7 @@ add_executable(ProfilerTests
 	test_InstrumentorTimer.cpp
 	test_Profiler.cpp
 	test_Macros.cpp
+	bench_GoogleProfiler.cpp
 )
 
 target_link_libraries(ProfilerTests
@@ -28,6 +29,8 @@ target_include_directories(ProfilerTests
 	PRIVATE
 		${CMAKE_CURRENT_SOURCE_DIR}/../src
 )
+
+target_compile_features(ProfilerTests PRIVATE cxx_std_23)
 
 include(GoogleTest)
 gtest_discover_tests(ProfilerTests)

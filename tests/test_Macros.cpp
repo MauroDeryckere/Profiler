@@ -8,15 +8,15 @@
 
 namespace
 {
-	std::string const TEST_DIR = "test_macros_output";
+	std::string const TEST_DIR{ "test_macros_output" };
 
-	std::string ReadFileContents(std::string const& path)
+	[[nodiscard]] std::string ReadFileContents(std::string const& path) noexcept
 	{
 		std::ifstream file(path);
 		return { std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
 	}
 
-	class MacrosTest : public ::testing::Test
+	class MacrosTest final : public ::testing::Test
 	{
 	protected:
 		void SetUp() override
@@ -35,9 +35,11 @@ namespace
 void ProfiledFunction()
 {
 	PROFILER_FUNCTION();
-	volatile int x = 0;
-	for (int i = 0; i < 1000; ++i)
+	volatile uint32_t x{ 0 };
+	for (uint32_t i{ 0 }; i < 1000; ++i)
+	{
 		x += i;
+	}
 }
 
 TEST_F(MacrosTest, ProfilerFunctionProducesEntry)
@@ -46,7 +48,7 @@ TEST_F(MacrosTest, ProfilerFunctionProducesEntry)
 	ProfiledFunction();
 	PROFILER_END_SESSION();
 
-	auto content = ReadFileContents(TEST_DIR + "/func.json");
+	auto const content{ ReadFileContents(TEST_DIR + "/func.json") };
 	EXPECT_NE(content.find("\"ProfiledFunction\""), std::string::npos);
 	EXPECT_NE(content.find("\"cat\":\"function\""), std::string::npos);
 }
@@ -57,14 +59,16 @@ TEST_F(MacrosTest, ProfilerScopeProducesEntry)
 
 	{
 		PROFILER_SCOPE("TestScope");
-		volatile int x = 0;
-		for (int i = 0; i < 1000; ++i)
+		volatile uint32_t x{ 0 };
+		for (uint32_t i{ 0 }; i < 1000; ++i)
+		{
 			x += i;
+		}
 	}
 
 	PROFILER_END_SESSION();
 
-	auto content = ReadFileContents(TEST_DIR + "/scope.json");
+	auto const content{ ReadFileContents(TEST_DIR + "/scope.json") };
 	EXPECT_NE(content.find("\"TestScope\""), std::string::npos);
 	EXPECT_NE(content.find("\"cat\":\"scope\""), std::string::npos);
 }
@@ -85,14 +89,14 @@ TEST_F(MacrosTest, NestedScopesProduceMultipleEntries)
 		PROFILER_SCOPE("Outer");
 		{
 			PROFILER_SCOPE("Inner");
-			volatile int x = 42;
+			volatile uint32_t x{ 42 };
 			(void)x;
 		}
 	}
 
 	PROFILER_END_SESSION();
 
-	auto content = ReadFileContents(TEST_DIR + "/nested.json");
+	auto const content{ ReadFileContents(TEST_DIR + "/nested.json") };
 	EXPECT_NE(content.find("\"Outer\""), std::string::npos);
 	EXPECT_NE(content.find("\"Inner\""), std::string::npos);
 }

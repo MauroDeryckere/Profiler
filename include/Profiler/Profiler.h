@@ -47,9 +47,8 @@ namespace profiler
 		[[nodiscard]] virtual std::string FlushToString() const = 0;
 
 		/**
-		 * Writes a single profile event. Pass start=-1 for an end-only event,
-		 * or end=-1 for a begin-only event.
-		 * @param result		The profile timing data.
+		 * Writes a single complete profile event with start time and duration.
+		 * @param result		The profile timing data (start and end timestamps).
 		 * @param isFunction	True if this is a function scope, false for a named scope.
 		 */
 		virtual void WriteProfile(ProfileResult const& result, bool isFunction) = 0;

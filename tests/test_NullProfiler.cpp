@@ -9,7 +9,7 @@ TEST(NullProfiler, CanConstruct)
 TEST(NullProfiler, WriteProfileIsNoOp)
 {
 	profiler::NullProfiler p;
-	profiler::ProfileResult result{ "test", 0, 100, std::this_thread::get_id() };
+	profiler::ProfileResult const result{ "test", 0, 100, std::this_thread::get_id() };
 	p.WriteProfile(result, true);
 	p.WriteProfile(result, false);
 }

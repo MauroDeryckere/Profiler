@@ -4,7 +4,7 @@
 
 TEST(ServiceLocator, GetProfilerReturnsValidReference)
 {
-	auto& prof = profiler::ServiceLocator::GetProfiler();
+	auto& prof{ profiler::ServiceLocator::GetProfiler() };
 	// Should not crash — just verify we get a reference
 	SUCCEED();
 }
@@ -18,12 +18,12 @@ TEST(ServiceLocator, ProfilerMacroMatchesGetProfiler)
 
 TEST(ServiceLocator, RegisterProfilerSwapsBackend)
 {
-	auto& before = profiler::ServiceLocator::GetProfiler();
-	auto custom = std::make_unique<profiler::NullProfiler>();
-	auto* customPtr = custom.get();
+	auto& before{ profiler::ServiceLocator::GetProfiler() };
+	auto custom{ std::make_unique<profiler::NullProfiler>() };
+	auto* customPtr{ custom.get() };
 
 	profiler::ServiceLocator::RegisterProfiler(std::move(custom));
-	auto& after = profiler::ServiceLocator::GetProfiler();
+	auto& after{ profiler::ServiceLocator::GetProfiler() };
 
 	EXPECT_EQ(&after, customPtr);
 	EXPECT_NE(&before, &after);
@@ -32,7 +32,7 @@ TEST(ServiceLocator, RegisterProfilerSwapsBackend)
 TEST(ServiceLocator, RegisterNullptrFallsBackToNullProfiler)
 {
 	profiler::ServiceLocator::RegisterProfiler(nullptr);
-	auto& prof = profiler::ServiceLocator::GetProfiler();
+	auto& prof{ profiler::ServiceLocator::GetProfiler() };
 
 	// Should not crash — we get a valid NullProfiler
 	prof.EndSession();

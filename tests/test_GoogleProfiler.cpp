@@ -7,15 +7,15 @@
 
 namespace
 {
-	std::string const TEST_DIR = "test_output";
+	std::string const TEST_DIR{ "test_output" };
 
-	std::string ReadFileContents(std::string const& path)
+	[[nodiscard]] std::string ReadFileContents(std::string const& path) noexcept
 	{
 		std::ifstream file(path);
 		return { std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
 	}
 
-	class GoogleProfilerTest : public ::testing::Test
+	class GoogleProfilerTest final : public ::testing::Test
 	{
 	protected:
 		void SetUp() override
@@ -45,7 +45,7 @@ TEST_F(GoogleProfilerTest, OutputContainsValidJsonStructure)
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 	p.EndSession();
 
-	auto content = ReadFileContents(TEST_DIR + "/output.json");
+	auto const content{ ReadFileContents(TEST_DIR + "/output.json") };
 	EXPECT_NE(content.find("\"traceEvents\""), std::string::npos);
 	EXPECT_EQ(content.front(), '{');
 	EXPECT_EQ(content.back(), '}');
@@ -56,16 +56,16 @@ TEST_F(GoogleProfilerTest, WriteProfileProducesEntry)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	profiler::ProfileResult result{ "MyFunction", 1000, 2000, std::this_thread::get_id() };
+	profiler::ProfileResult const result{ "MyFunction", 1000, 2000, std::this_thread::get_id() };
 	p.WriteProfile(result, true);
 
 	p.EndSession();
 
-	auto content = ReadFileContents(TEST_DIR + "/output.json");
+	auto const content{ ReadFileContents(TEST_DIR + "/output.json") };
 	EXPECT_NE(content.find("\"MyFunction\""), std::string::npos);
 	EXPECT_NE(content.find("\"cat\":\"function\""), std::string::npos);
-	EXPECT_NE(content.find("\"ph\":\"B\""), std::string::npos);
-	EXPECT_NE(content.find("\"ph\":\"E\""), std::string::npos);
+	EXPECT_NE(content.find("\"ph\":\"X\""), std::string::npos);
+	EXPECT_NE(content.find("\"dur\":"), std::string::npos);
 }
 
 TEST_F(GoogleProfilerTest, ScopeCategory)
@@ -73,12 +73,12 @@ TEST_F(GoogleProfilerTest, ScopeCategory)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	profiler::ProfileResult result{ "MyScope", 0, 500, std::this_thread::get_id() };
+	profiler::ProfileResult const result{ "MyScope", 0, 500, std::this_thread::get_id() };
 	p.WriteProfile(result, false);
 
 	p.EndSession();
 
-	auto content = ReadFileContents(TEST_DIR + "/output.json");
+	auto const content{ ReadFileContents(TEST_DIR + "/output.json") };
 	EXPECT_NE(content.find("\"cat\":\"scope\""), std::string::npos);
 }
 
@@ -87,14 +87,14 @@ TEST_F(GoogleProfilerTest, MultipleEntriesAreSeparated)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	profiler::ProfileResult r1{ "First", 0, 100, std::this_thread::get_id() };
-	profiler::ProfileResult r2{ "Second", 100, 200, std::this_thread::get_id() };
+	profiler::ProfileResult const r1{ "First", 0, 100, std::this_thread::get_id() };
+	profiler::ProfileResult const r2{ "Second", 100, 200, std::this_thread::get_id() };
 	p.WriteProfile(r1, true);
 	p.WriteProfile(r2, true);
 
 	p.EndSession();
 
-	auto content = ReadFileContents(TEST_DIR + "/output.json");
+	auto const content{ ReadFileContents(TEST_DIR + "/output.json") };
 	EXPECT_NE(content.find("\"First\""), std::string::npos);
 	EXPECT_NE(content.find("\"Second\""), std::string::npos);
 }
@@ -104,28 +104,30 @@ TEST_F(GoogleProfilerTest, ThreadIdIsCaptured)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	profiler::ProfileResult result{ "Threaded", 0, 100, std::this_thread::get_id() };
+	profiler::ProfileResult const result{ "Threaded", 0, 100, std::this_thread::get_id() };
 	p.WriteProfile(result, true);
 
 	p.EndSession();
 
-	auto content = ReadFileContents(TEST_DIR + "/output.json");
+	auto const content{ ReadFileContents(TEST_DIR + "/output.json") };
 	EXPECT_NE(content.find("\"tid\":1"), std::string::npos);
 }
 
 TEST_F(GoogleProfilerTest, MultiThreadedWritesAreSafe)
 {
+	uint32_t constexpr NUM_MULTITHREAD_WRITES{ 100 };
+
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	auto writeFromThread = [&p](char const* name)
+	auto writeFromThread{ [&p](char const* name)
 	{
-		for (int i = 0; i < 100; ++i)
+		for (uint32_t i{ 0 }; i < NUM_MULTITHREAD_WRITES; ++i)
 		{
-			profiler::ProfileResult result{ name, 0, 100, std::this_thread::get_id() };
+			profiler::ProfileResult const result{ name, 0, 100, std::this_thread::get_id() };
 			p.WriteProfile(result, true);
 		}
-	};
+	} };
 
 	std::thread t1(writeFromThread, "ThreadA");
 	std::thread t2(writeFromThread, "ThreadB");
@@ -134,7 +136,7 @@ TEST_F(GoogleProfilerTest, MultiThreadedWritesAreSafe)
 
 	p.EndSession();
 
-	auto content = ReadFileContents(TEST_DIR + "/output.json");
+	auto const content{ ReadFileContents(TEST_DIR + "/output.json") };
 	EXPECT_NE(content.find("\"ThreadA\""), std::string::npos);
 	EXPECT_NE(content.find("\"ThreadB\""), std::string::npos);
 }
@@ -144,19 +146,19 @@ TEST_F(GoogleProfilerTest, DifferentThreadsProduceDifferentTids)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	profiler::ProfileResult mainResult{ "MainEntry", 0, 100, std::this_thread::get_id() };
+	profiler::ProfileResult const mainResult{ "MainEntry", 0, 100, std::this_thread::get_id() };
 	p.WriteProfile(mainResult, true);
 
 	std::thread worker([&]()
 	{
-		profiler::ProfileResult workerResult{ "WorkerEntry", 0, 100, std::this_thread::get_id() };
+		profiler::ProfileResult const workerResult{ "WorkerEntry", 0, 100, std::this_thread::get_id() };
 		p.WriteProfile(workerResult, true);
 	});
 	worker.join();
 
 	p.EndSession();
 
-	auto content = ReadFileContents(TEST_DIR + "/output.json");
+	auto const content{ ReadFileContents(TEST_DIR + "/output.json") };
 	// Main thread gets tid 1, worker gets tid 2
 	EXPECT_NE(content.find("\"tid\":1"), std::string::npos);
 	EXPECT_NE(content.find("\"tid\":2"), std::string::npos);
@@ -181,12 +183,12 @@ TEST_F(GoogleProfilerTest, NoEmptyEventInOutput)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	profiler::ProfileResult result{ "Entry", 0, 100, std::this_thread::get_id() };
+	profiler::ProfileResult const result{ "Entry", 0, 100, std::this_thread::get_id() };
 	p.WriteProfile(result, true);
 
 	p.EndSession();
 
-	auto content = ReadFileContents(TEST_DIR + "/output.json");
+	auto const content{ ReadFileContents(TEST_DIR + "/output.json") };
 	// Should start with [{ not [{},  (no empty event)
 	EXPECT_EQ(content.find("[{}"), std::string::npos);
 }
@@ -196,10 +198,10 @@ TEST_F(GoogleProfilerTest, FlushToStringReturnsValidJson)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	profiler::ProfileResult result{ "Flushed", 0, 500, std::this_thread::get_id() };
+	profiler::ProfileResult const result{ "Flushed", 0, 500, std::this_thread::get_id() };
 	p.WriteProfile(result, true);
 
-	auto json = p.FlushToString();
+	auto const json{ p.FlushToString() };
 	EXPECT_FALSE(json.empty());
 	EXPECT_EQ(json.front(), '{');
 	EXPECT_EQ(json.back(), '}');
@@ -210,7 +212,7 @@ TEST_F(GoogleProfilerTest, FlushToStringReturnsValidJson)
 TEST_F(GoogleProfilerTest, FlushToStringWithoutSessionReturnsEmpty)
 {
 	profiler::GoogleProfiler p;
-	auto json = p.FlushToString();
+	auto const json{ p.FlushToString() };
 	EXPECT_TRUE(json.empty());
 }
 
@@ -219,14 +221,14 @@ TEST_F(GoogleProfilerTest, FlushToStringIsReadOnly)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	profiler::ProfileResult result{ "Entry", 0, 100, std::this_thread::get_id() };
+	profiler::ProfileResult const result{ "Entry", 0, 100, std::this_thread::get_id() };
 	p.WriteProfile(result, true);
 
-	auto json1 = p.FlushToString();
+	auto const json1{ p.FlushToString() };
 	EXPECT_FALSE(json1.empty());
 
 	// FlushToString is read-only — calling it again returns the same data
-	auto json2 = p.FlushToString();
+	auto const json2{ p.FlushToString() };
 	EXPECT_EQ(json1, json2);
 
 	p.EndSession();
@@ -237,17 +239,17 @@ TEST_F(GoogleProfilerTest, FlushToStringMidSessionReturnsSnapshot)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	profiler::ProfileResult r1{ "First", 0, 100, std::this_thread::get_id() };
+	profiler::ProfileResult const r1{ "First", 0, 100, std::this_thread::get_id() };
 	p.WriteProfile(r1, true);
 
-	auto snapshot = p.FlushToString();
+	auto const snapshot{ p.FlushToString() };
 	EXPECT_NE(snapshot.find("\"First\""), std::string::npos);
 
 	// Write more data after snapshot
-	profiler::ProfileResult r2{ "Second", 100, 200, std::this_thread::get_id() };
+	profiler::ProfileResult const r2{ "Second", 100, 200, std::this_thread::get_id() };
 	p.WriteProfile(r2, true);
 
-	auto full = p.FlushToString();
+	auto const full{ p.FlushToString() };
 	EXPECT_NE(full.find("\"First\""), std::string::npos);
 	EXPECT_NE(full.find("\"Second\""), std::string::npos);
 
@@ -259,10 +261,10 @@ TEST_F(GoogleProfilerTest, BeginSessionWithoutFileDoesNotCreateFile)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test");
 
-	profiler::ProfileResult result{ "NoFile", 0, 100, std::this_thread::get_id() };
+	profiler::ProfileResult const result{ "NoFile", 0, 100, std::this_thread::get_id() };
 	p.WriteProfile(result, true);
 
-	auto json = p.FlushToString();
+	auto const json{ p.FlushToString() };
 	EXPECT_NE(json.find("\"NoFile\""), std::string::npos);
 
 	p.EndSession();
@@ -276,15 +278,15 @@ TEST_F(GoogleProfilerTest, EndSessionWritesFileAfterFlushToString)
 	profiler::GoogleProfiler p;
 	p.BeginSession("test", (TEST_DIR + "/output").c_str());
 
-	profiler::ProfileResult result{ "Both", 0, 100, std::this_thread::get_id() };
+	profiler::ProfileResult const result{ "Both", 0, 100, std::this_thread::get_id() };
 	p.WriteProfile(result, true);
 
-	auto json = p.FlushToString();
+	auto const json{ p.FlushToString() };
 	EXPECT_NE(json.find("\"Both\""), std::string::npos);
 
 	p.EndSession();
 
 	// File should also have been written
-	auto content = ReadFileContents(TEST_DIR + "/output.json");
+	auto const content{ ReadFileContents(TEST_DIR + "/output.json") };
 	EXPECT_NE(content.find("\"Both\""), std::string::npos);
 }
