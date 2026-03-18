@@ -25,6 +25,9 @@ namespace profiler
 		OptickProfiler(OptickProfiler&&) = delete;
 		OptickProfiler& operator=(OptickProfiler const&) = delete;
 		OptickProfiler& operator=(OptickProfiler&&) = delete;
+
+	private:
+		bool m_Active{ false };
 	};
 }
 

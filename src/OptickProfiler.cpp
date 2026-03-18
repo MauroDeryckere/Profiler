@@ -9,6 +9,7 @@ namespace profiler
 	{
 		assert(!filepath.empty() && "OptickProfiler requires a file path — use BeginSession(name, filepath)");
 		Profiler<OptickProfiler>::BeginSession(name, filepath, maxFrames, std::move(callback));
+		m_Active = true;
 		OPTICK_START_CAPTURE()
 	}
 
@@ -19,10 +20,12 @@ namespace profiler
 
 	void OptickProfiler::EndSession()
 	{
-		if (GetFileName().empty())
+		if (!m_Active)
 		{
 			return;
 		}
+
+		m_Active = false;
 
 		auto const path{ GetFileName() + ".opt" };
 		PrepareOutputPath(path);
