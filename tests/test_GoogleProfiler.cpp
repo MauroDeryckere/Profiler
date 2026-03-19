@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 #include "Profiler/GoogleProfiler.h"
+#include "Profiler/ServiceLocator.h"
+#include "cross_lib_helper.h"
 
 #include <filesystem>
 #include <fstream>
@@ -111,6 +113,58 @@ TEST_F(GoogleProfilerTest, ThreadIdIsCaptured)
 
 	auto const content{ ReadFileContents(TEST_DIR + "/output.json") };
 	EXPECT_NE(content.find("\"tid\":1"), std::string::npos);
+}
+
+TEST_F(GoogleProfilerTest, SingleThreadProducesOneTid)
+{
+	profiler::GoogleProfiler p;
+	p.BeginSession("test", (TEST_DIR + "/output").c_str());
+
+	// Write many events from the same thread — simulates nested PROFILER_FUNCTION / PROFILER_SCOPE
+	for (int i{ 0 }; i < 50; ++i)
+	{
+		profiler::ProfileResult const result{ "Entry", 0, 100 };
+		p.WriteProfile(result, i % 2 == 0);
+	}
+
+	p.EndSession();
+
+	auto const content{ ReadFileContents(TEST_DIR + "/output.json") };
+
+	// All events must have tid:1 — only one thread buffer should exist
+	EXPECT_NE(content.find("\"tid\":1"), std::string::npos);
+	EXPECT_EQ(content.find("\"tid\":2"), std::string::npos);
+}
+
+TEST_F(GoogleProfilerTest, SingleThreadOneTidAcrossMultipleSessions)
+{
+	profiler::GoogleProfiler p;
+
+	// Session 1
+	p.BeginSession("first", (TEST_DIR + "/first").c_str());
+	for (int i{ 0 }; i < 20; ++i)
+	{
+		profiler::ProfileResult const result{ "S1Entry", 0, 100 };
+		p.WriteProfile(result, true);
+	}
+	p.EndSession();
+
+	// Session 2 — same thread should still get a single tid
+	p.BeginSession("second", (TEST_DIR + "/second").c_str());
+	for (int i{ 0 }; i < 20; ++i)
+	{
+		profiler::ProfileResult const result{ "S2Entry", 0, 100 };
+		p.WriteProfile(result, true);
+	}
+	p.EndSession();
+
+	auto const first{ ReadFileContents(TEST_DIR + "/first.json") };
+	EXPECT_NE(first.find("\"tid\":1"), std::string::npos);
+	EXPECT_EQ(first.find("\"tid\":2"), std::string::npos);
+
+	auto const second{ ReadFileContents(TEST_DIR + "/second.json") };
+	EXPECT_NE(second.find("\"tid\":1"), std::string::npos);
+	EXPECT_EQ(second.find("\"tid\":2"), std::string::npos);
 }
 
 TEST_F(GoogleProfilerTest, MultiThreadedWritesAreSafe)
@@ -500,4 +554,63 @@ TEST_F(GoogleProfilerTest, FlushToStringContainsMultiThreadData)
 	EXPECT_NE(json.find("\"ThreadB\""), std::string::npos);
 
 	p.EndSession();
+}
+
+TEST_F(GoogleProfilerTest, CrossLibrarySameThreadOneTid)
+{
+	// Uses the global PROFILER singleton (ServiceLocator) — same as the engine does.
+	auto& profiler{ profiler::ServiceLocator::GetProfiler() };
+	profiler.BeginSession("test", (TEST_DIR + "/crosslib").c_str());
+
+	// Write from this translation unit (test executable)
+	profiler::ProfileResult const localResult{ "LocalEntry", 0, 100 };
+	profiler.WriteProfile(localResult, true);
+
+	// Write from a different static library (ProfilerCrossLibHelper)
+	CrossLibWriteFunction();
+	CrossLibWriteScope();
+
+	// Write from this TU again
+	profiler::ProfileResult const localResult2{ "LocalEntry2", 200, 300 };
+	profiler.WriteProfile(localResult2, false);
+
+	profiler.EndSession();
+
+	auto const content{ ReadFileContents(TEST_DIR + "/crosslib.json") };
+
+	// All events must share the same tid — only one thread is involved
+	EXPECT_NE(content.find("\"tid\":1"), std::string::npos);
+	EXPECT_EQ(content.find("\"tid\":2"), std::string::npos) << "Cross-library calls created a second thread buffer!\nJSON:\n" << content;
+}
+
+TEST_F(GoogleProfilerTest, BuildJsonTidNotCorruptedByTimestamps)
+{
+	// Regression: tidStr was a string_view into buf, which got overwritten
+	// by to_chars for timestamps/durations in the event loop.
+	profiler::GoogleProfiler p;
+	p.BeginSession("test", (TEST_DIR + "/output").c_str());
+
+	// Use large timestamps/durations so to_chars writes many digits into buf
+	profiler::ProfileResult const r1{ "First", 1000000000, 1000050000 };
+	profiler::ProfileResult const r2{ "Second", 2000000000, 2000099999 };
+	profiler::ProfileResult const r3{ "Third", 3000000000, 3000012345 };
+	p.WriteProfile(r1, true);
+	p.WriteProfile(r2, true);
+	p.WriteProfile(r3, false);
+
+	p.EndSession();
+
+	auto const content{ ReadFileContents(TEST_DIR + "/output.json") };
+
+	// Count occurrences of "tid":1 — should match all 3 events + 1 metadata = at least 4
+	size_t count{ 0 };
+	std::string const needle{ "\"tid\":1" };
+	for (size_t pos{ content.find(needle) }; pos != std::string::npos; pos = content.find(needle, pos + 1))
+		++count;
+
+	EXPECT_GE(count, 4u) << "Expected tid:1 for all events, got " << count << "\nJSON:\n" << content;
+
+	// No other tids should exist
+	EXPECT_EQ(content.find("\"tid\":2"), std::string::npos) << "Found tid:2 — buf corruption!\nJSON:\n" << content;
+	EXPECT_EQ(content.find("\"tid\":3"), std::string::npos) << "Found tid:3 — buf corruption!\nJSON:\n" << content;
 }

@@ -47,20 +47,10 @@ namespace profiler
 		void EndSession();
 		[[nodiscard]] bool IsSessionActive() const noexcept { return m_Active; }
 		void SetThreadName(std::string_view name) noexcept;
-		void MarkFrame(std::string_view name) noexcept;
+		void MarkFrame(std::string_view name) noexcept { SetThreadName(name); }
 		[[nodiscard]] std::string FlushToString() const;
 
-		inline void WriteProfile(ProfileResult const& result, bool isFunction) noexcept
-		{
-			if (!m_Active) [[unlikely]]
-			{
-				return;
-			}
-
-			EnsureThreadBuffer();
-			s_Cache.buffer->events.emplace_back(result.name, result.start, result.end - result.start,
-				isFunction ? detail::TraceEventType::Function : detail::TraceEventType::Scope);
-		}
+		void WriteProfile(ProfileResult const& result, bool isFunction) noexcept;
 
 		GoogleProfiler(GoogleProfiler const&) = delete;
 		GoogleProfiler(GoogleProfiler&&) = delete;
@@ -78,13 +68,7 @@ namespace profiler
 
 		static thread_local ThreadCache s_Cache;
 
-		inline void EnsureThreadBuffer() noexcept
-		{
-			if (s_Cache.sessionId != m_SessionId) [[unlikely]]
-			{
-				RegisterThread();
-			}
-		}
+		void EnsureThreadBuffer() noexcept;
 
 		void RegisterThread() noexcept;
 		[[nodiscard]] std::string BuildJson() const;

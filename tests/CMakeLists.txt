@@ -8,6 +8,13 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
+# Separate static library to simulate cross-library profiler calls.
+# This reproduces the engine scenario: profiler macros called from
+# a different static library than the one defining the profiler.
+add_library(ProfilerCrossLibHelper STATIC cross_lib_helper.cpp)
+target_link_libraries(ProfilerCrossLibHelper PUBLIC Profiler::Profiler)
+target_compile_features(ProfilerCrossLibHelper PRIVATE cxx_std_23)
+
 add_executable(ProfilerTests
 	test_GoogleProfiler.cpp
 	test_ServiceLocator.cpp
@@ -20,6 +27,7 @@ add_executable(ProfilerTests
 target_link_libraries(ProfilerTests
 	PRIVATE
 		Profiler::Profiler
+		ProfilerCrossLibHelper
 		GTest::gtest_main
 )
 

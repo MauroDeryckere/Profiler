@@ -36,6 +36,26 @@ namespace profiler
 		m_ThreadBuffers.emplace_back(std::move(tb));
 	}
 
+	void GoogleProfiler::EnsureThreadBuffer() noexcept
+	{
+		if (s_Cache.sessionId != m_SessionId) [[unlikely]]
+		{
+			RegisterThread();
+		}
+	}
+
+	void GoogleProfiler::WriteProfile(ProfileResult const& result, bool isFunction) noexcept
+	{
+		if (!m_Active) [[unlikely]]
+		{
+			return;
+		}
+
+		EnsureThreadBuffer();
+		s_Cache.buffer->events.emplace_back(result.name, result.start, result.end - result.start,
+			isFunction ? detail::TraceEventType::Function : detail::TraceEventType::Scope);
+	}
+
 	void GoogleProfiler::SetThreadName(std::string_view name) noexcept
 	{
 		if (!m_Active) [[unlikely]]
@@ -44,14 +64,11 @@ namespace profiler
 		}
 
 		EnsureThreadBuffer();
+		if (s_Cache.buffer->threadName == name)
+		{
+			return;
+		}
 		s_Cache.buffer->threadName = name;
-	}
-
-	void GoogleProfiler::MarkFrame(std::string_view name) noexcept
-	{
-		// Google Trace Event Format has no frame boundary concept.
-		// Falls back to naming the calling thread so the trace viewer can at least group events.
-		SetThreadName(name);
 	}
 
 	std::string GoogleProfiler::BuildJson() const
@@ -66,13 +83,14 @@ namespace profiler
 
 		bool first{ true };
 		char buf[64];
+		char tidBuf[16];
 
 		for (auto const& tb : m_ThreadBuffers)
 		{
 			if (tb->events.empty()) continue;
 
-			auto [tidEnd, _]{ std::to_chars(buf, buf + sizeof(buf), tb->tid) };
-			std::string_view const tidStr{ buf, tidEnd };
+			auto [tidEnd, _]{ std::to_chars(tidBuf, tidBuf + sizeof(tidBuf), tb->tid) };
+			std::string_view const tidStr{ tidBuf, tidEnd };
 
 			// Thread metadata event
 			if (!first) json += ',';
