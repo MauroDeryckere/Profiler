@@ -47,6 +47,7 @@
 	#define PROFILER_BEGIN_SESSION(name, ...)	 PROFILER.BeginSession(name, ##__VA_ARGS__)
 	#define PROFILER_END_SESSION()               PROFILER.EndSession()
 	#define PROFILER_TICK()                      PROFILER.Tick()
+	#define PROFILER_IS_SESSION_ACTIVE()         PROFILER.IsSessionActive()
 
 #else
 
@@ -57,6 +58,7 @@
 	#define PROFILER_BEGIN_SESSION(name, ...)
 	#define PROFILER_END_SESSION()
 	#define PROFILER_TICK()
+	#define PROFILER_IS_SESSION_ACTIVE()         false
 
 #endif
 

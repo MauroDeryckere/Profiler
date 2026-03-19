@@ -49,6 +49,8 @@ namespace profiler
 			m_FlushCallback = std::move(callback);
 		}
 
+		[[nodiscard]] bool IsSessionActive() const noexcept { return self().IsSessionActive(); }
+
 		void SetThreadName(std::string_view /*name*/) noexcept {}
 		void MarkFrame(std::string_view /*name*/) noexcept {}
 

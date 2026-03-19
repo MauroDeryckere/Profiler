@@ -19,6 +19,7 @@ namespace profiler
 		void BeginSession(std::string const& name, std::string_view filepath = {}, uint32_t maxFrames = 0, FlushCallback callback = nullptr);
 		void WriteProfile(ProfileResult const& result, bool isFunction);
 		void EndSession();
+		[[nodiscard]] bool IsSessionActive() const noexcept { return m_Active; }
 		[[nodiscard]] std::string FlushToString() const { return {}; }
 
 		OptickProfiler(OptickProfiler const&) = delete;

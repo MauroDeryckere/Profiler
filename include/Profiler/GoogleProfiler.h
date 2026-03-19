@@ -45,6 +45,7 @@ namespace profiler
 
 		void BeginSession(std::string const& name, std::string_view filepath = {}, uint32_t maxFrames = 0, FlushCallback callback = nullptr);
 		void EndSession();
+		[[nodiscard]] bool IsSessionActive() const noexcept { return m_Active; }
 		void SetThreadName(std::string_view name) noexcept;
 		void MarkFrame(std::string_view name) noexcept;
 		[[nodiscard]] std::string FlushToString() const;
