@@ -43,7 +43,7 @@ jobs:
             build_type: Debug
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Cache FetchContent dependencies
         uses: actions/cache@v5
@@ -76,7 +76,7 @@ jobs:
         abi: [arm64-v8a, armeabi-v7a, x86_64]
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Configure
         run: >
@@ -101,7 +101,7 @@ jobs:
         arch: [arm64, x86_64]
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Configure
         run: >
